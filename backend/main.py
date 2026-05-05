@@ -1,37 +1,12 @@
 import os
 import uuid
-import time
 from PIL import Image
 import pillow_avif
 from fastapi import FastAPI, UploadFile, File, Form, BackgroundTasks, HTTPException, Query
-from fastapi.responses import FileResponse, JSONResponse
+from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from engine import EmojiMosaicEngine
-
-# Paths relative to this file
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-UPLOAD_DIR = os.path.join(BASE_DIR, "uploads")
-OUTPUT_DIR = os.path.join(BASE_DIR, "outputs")
-DATA_DIR = os.path.join(BASE_DIR, "data")
-
-os.makedirs(UPLOAD_DIR, exist_ok=True)
-os.makedirs(OUTPUT_DIR, exist_ok=True)
-
-def cleanup_old_files(max_age_seconds=600):
-    """Delete files older than max_age_seconds from uploads and outputs"""
-    now = time.time()
-    for folder in [UPLOAD_DIR, OUTPUT_DIR]:
-        if not os.path.exists(folder): continue
-        for filename in os.listdir(folder):
-            if filename == ".gitkeep": continue
-            file_path = os.path.join(folder, filename)
-            try:
-                if os.path.getmtime(file_path) < now - max_age_seconds:
-                    if os.path.isfile(file_path):
-                        os.remove(file_path)
-            except Exception as e:
-                print(f"Error cleaning up {file_path}: {e}")
 
 app = FastAPI(title="Emoji Mosaic Perfect Engine")
 
@@ -43,41 +18,22 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Paths defined above (lines 12-16)
+# Paths
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+UPLOAD_DIR = os.path.join(BASE_DIR, "..", "uploads")
+OUTPUT_DIR = os.path.join(BASE_DIR, "..", "outputs")
+DATA_DIR = os.path.join(BASE_DIR, "..", "data")
+
+os.makedirs(UPLOAD_DIR, exist_ok=True)
+os.makedirs(OUTPUT_DIR, exist_ok=True)
 
 # Initialize Engine
 engine = EmojiMosaicEngine(os.path.join(DATA_DIR, "emojis.csv"))
 
-# Custom route for serving outputs with explicit CORS headers
-@app.get("/outputs/{filename}")
-async def serve_output(filename: str):
-    file_path = os.path.join(OUTPUT_DIR, filename)
-    if not os.path.exists(file_path):
-        raise HTTPException(status_code=404, detail="File not found")
-    
-    return FileResponse(
-        file_path, 
-        headers={
-            "Access-Control-Allow-Origin": "*",
-            "Cross-Origin-Resource-Policy": "cross-origin",
-            "Cache-Control": "no-cache"
-        }
-    )
+# Serve outputs as static files
+app.mount("/outputs", StaticFiles(directory=OUTPUT_DIR), name="outputs")
 
-# Debug route to check files on server
-@app.get("/debug-files")
-async def debug_files():
-    files = []
-    if os.path.exists(OUTPUT_DIR):
-        files = os.listdir(OUTPUT_DIR)
-    return {
-        "output_dir": OUTPUT_DIR,
-        "exists": os.path.exists(OUTPUT_DIR),
-        "files": files,
-        "base_dir": BASE_DIR
-    }
-
-# Task tracking (In-memory, limited to ~10,000 tasks on Render Free Tier)
+# Task tracking
 tasks = {}
 
 EXPORT_FORMATS = {
@@ -122,15 +78,8 @@ def process_image(task_id, input_path, config):
         engine.create_mosaic(input_path, output_path, config)
         tasks[task_id] = {"status": "completed", "output_url": f"/outputs/{output_filename}"}
     except Exception as e:
-        print(f"!!! Error processing {task_id}: {str(e)}")
-        import traceback
-        traceback.print_exc()
+        print(f"Error processing {task_id}: {str(e)}")
         tasks[task_id] = {"status": f"error: {str(e)}"}
-    finally:
-        # Help garbage collection on Render Free Tier
-        import gc
-        gc.collect()
-
 
 @app.post("/upload")
 async def upload_image(
@@ -154,7 +103,6 @@ async def upload_image(
     }
     
     background_tasks.add_task(process_image, task_id, input_path, config)
-    background_tasks.add_task(cleanup_old_files)
     
     return {"id": task_id, "status": "processing"}
 
@@ -193,15 +141,10 @@ async def export_image(
         filename=os.path.basename(export_path),
     )
 
-@app.get("/ping")
-async def ping():
-    return {"status": "ok", "timestamp": time.time()}
-
 @app.get("/")
 async def root():
     return {"message": "Emoji Mosaic Perfect Engine is running"}
 
 if __name__ == "__main__":
     import uvicorn
-    port = int(os.environ.get("PORT", 5999))
-    uvicorn.run(app, host="0.0.0.0", port=port)
+    uvicorn.run(app, host="0.0.0.0", port=5999)
