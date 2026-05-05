@@ -6,7 +6,7 @@ import { Upload, Download, X, Settings, Sparkles, ArrowLeft, Sun, Moon } from 'l
 import styled from 'styled-components';
 import Loader from './Loader';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:5999';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5999';
 const POLL_INTERVAL = 1500;
 
 // ========== FULLSCREEN ZOOM VIEWER ==========
