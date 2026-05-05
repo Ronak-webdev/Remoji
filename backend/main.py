@@ -100,6 +100,11 @@ def process_image(task_id, input_path, config):
         import traceback
         traceback.print_exc()
         tasks[task_id] = {"status": f"error: {str(e)}"}
+    finally:
+        # Help garbage collection on Render Free Tier
+        import gc
+        gc.collect()
+
 
 @app.post("/upload")
 async def upload_image(

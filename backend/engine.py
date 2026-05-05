@@ -83,6 +83,9 @@ class EmojiMosaicEngine:
         img_small = ImageEnhance.Contrast(img_small).enhance(1.1)
         pixels = np.array(img_small)
         
+        # Free up memory from small image after getting pixels
+        del img_small
+        
         # Output canvas dimensions (2x scale for high-quality zoom)
         out_w = cols * emoji_size * 2
         out_h = rows * emoji_size * 2
