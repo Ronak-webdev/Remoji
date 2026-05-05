@@ -81,7 +81,7 @@ def main():
         
     out_df = pd.DataFrame(processed_data)
     # Reorder to match engine expectations: emoji, r, g, b, hex
-    out_df[['emoji', 'r', 'g', 'b', 'hex']].to_csv(OUTPUT_CSV, index=False)
+    out_df[['emoji', 'r', 'g', 'b', 'hex']].to_csv(OUTPUT_CSV, index=False, encoding='utf-8')
     print(f"Saved to {OUTPUT_CSV}")
 
 if __name__ == "__main__":
