@@ -9,8 +9,12 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from engine import EmojiMosaicEngine
 
-UPLOAD_DIR = os.path.join(os.path.dirname(__file__), "uploads")
-OUTPUT_DIR = os.path.join(os.path.dirname(__file__), "outputs")
+# Paths relative to this file
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+UPLOAD_DIR = os.path.join(BASE_DIR, "uploads")
+OUTPUT_DIR = os.path.join(BASE_DIR, "outputs")
+DATA_DIR = os.path.join(BASE_DIR, "data")
+
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
@@ -39,14 +43,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Paths
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-UPLOAD_DIR = os.path.join(BASE_DIR, "..", "uploads")
-OUTPUT_DIR = os.path.join(BASE_DIR, "..", "outputs")
-DATA_DIR = os.path.join(BASE_DIR, "..", "data")
-
-os.makedirs(UPLOAD_DIR, exist_ok=True)
-os.makedirs(OUTPUT_DIR, exist_ok=True)
+# Paths defined above (lines 12-16)
 
 # Initialize Engine
 engine = EmojiMosaicEngine(os.path.join(DATA_DIR, "emojis.csv"))
@@ -99,7 +96,9 @@ def process_image(task_id, input_path, config):
         engine.create_mosaic(input_path, output_path, config)
         tasks[task_id] = {"status": "completed", "output_url": f"/outputs/{output_filename}"}
     except Exception as e:
-        print(f"Error processing {task_id}: {str(e)}")
+        print(f"!!! Error processing {task_id}: {str(e)}")
+        import traceback
+        traceback.print_exc()
         tasks[task_id] = {"status": f"error: {str(e)}"}
 
 @app.post("/upload")

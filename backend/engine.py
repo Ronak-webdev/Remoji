@@ -59,6 +59,8 @@ class EmojiMosaicEngine:
         quality = int(config.get('quality', 3))
         emoji_size = int(config.get('emoji_size', 16))
         
+        print(f"--- Starting mosaic creation: quality={quality}, size={emoji_size} ---")
+        
         # Load image
         img = Image.open(input_path).convert('RGB')
         w, h = img.size
@@ -111,5 +113,6 @@ class EmojiMosaicEngine:
                 draw.text((x, y), emoji, font=font, embedded_color=True)
         
         # Convert back to RGB or keep RGBA if needed
+        print(f"--- Saving final output to {output_path} ---")
         output.save(output_path, "PNG")
         return output_path
