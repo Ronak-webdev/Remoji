@@ -1,5 +1,5 @@
-import os
 import uuid
+import time
 from PIL import Image
 import pillow_avif
 from fastapi import FastAPI, UploadFile, File, Form, BackgroundTasks, HTTPException, Query
@@ -7,6 +7,26 @@ from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from engine import EmojiMosaicEngine
+
+UPLOAD_DIR = os.path.join(os.path.dirname(__file__), "uploads")
+OUTPUT_DIR = os.path.join(os.path.dirname(__file__), "outputs")
+os.makedirs(UPLOAD_DIR, exist_ok=True)
+os.makedirs(OUTPUT_DIR, exist_ok=True)
+
+def cleanup_old_files(max_age_seconds=3600):
+    """Delete files older than max_age_seconds from uploads and outputs"""
+    now = time.time()
+    for folder in [UPLOAD_DIR, OUTPUT_DIR]:
+        if not os.path.exists(folder): continue
+        for filename in os.listdir(folder):
+            if filename == ".gitkeep": continue
+            file_path = os.path.join(folder, filename)
+            try:
+                if os.path.getmtime(file_path) < now - max_age_seconds:
+                    if os.path.isfile(file_path):
+                        os.remove(file_path)
+            except Exception as e:
+                print(f"Error cleaning up {file_path}: {e}")
 
 app = FastAPI(title="Emoji Mosaic Perfect Engine")
 
@@ -103,6 +123,7 @@ async def upload_image(
     }
     
     background_tasks.add_task(process_image, task_id, input_path, config)
+    background_tasks.add_task(cleanup_old_files)
     
     return {"id": task_id, "status": "processing"}
 
