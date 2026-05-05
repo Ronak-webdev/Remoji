@@ -41,7 +41,20 @@ class EmojiMosaicEngine:
             if os.path.exists(path):
                 return path
         
+        # 4. DOWNLOAD FONT IF MISSING (Crucial for Render)
+        print("--- Emoji font not found locally or in system paths ---")
+        try:
+            print("--- Downloading NotoColorEmoji.ttf (this may take a few seconds) ---")
+            import urllib.request
+            url = "https://github.com/googlefonts/noto-emoji/raw/main/fonts/NotoColorEmoji.ttf"
+            urllib.request.urlretrieve(url, local_font)
+            print("--- Font downloaded successfully ---")
+            return local_font
+        except Exception as e:
+            print(f"--- Failed to download font: {e} ---")
+            
         return None # Will fallback to default font in create_mosaic
+
 
     def get_best_emoji(self, rgb):
         """Find the closest emoji using KDTree (Euclidean distance in RGB)"""
@@ -90,8 +103,8 @@ class EmojiMosaicEngine:
         out_w = cols * emoji_size * 2
         out_h = rows * emoji_size * 2
         
-        # Create high-res canvas
-        output = Image.new('RGBA', (out_w, out_h), (255, 255, 255, 0))
+        # Create high-res canvas (Opaque background to prevent invisible images if emojis fail to load)
+        output = Image.new('RGBA', (out_w, out_h), (245, 245, 245, 255))
         draw = ImageDraw.Draw(output)
         
         # Load font - scaled to fit emoji_size (with 2x scaling)
