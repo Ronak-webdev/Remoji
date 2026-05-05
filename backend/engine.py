@@ -22,38 +22,13 @@ class EmojiMosaicEngine:
 
     def _find_emoji_font(self):
         """Finds the best available emoji font on the current system"""
-        # 1. Check for local font file (recommended for deployment)
+        # Always use the bundled font file we just downloaded
         local_font = os.path.join(os.path.dirname(__file__), "NotoColorEmoji.ttf")
         if os.path.exists(local_font):
             return local_font
             
-        # 2. Check Windows Path
-        win_font = "C:\\Windows\\Fonts\\seguiemj.ttf"
-        if os.path.exists(win_font):
-            return win_font
-            
-        # 3. Check Linux Paths (Common on Render/Ubuntu)
-        linux_paths = [
-            "/usr/share/fonts/truetype/noto/NotoColorEmoji.ttf",
-            "/usr/share/fonts/noto/NotoColorEmoji.ttf"
-        ]
-        for path in linux_paths:
-            if os.path.exists(path):
-                return path
-        
-        # 4. DOWNLOAD FONT IF MISSING (Crucial for Render)
-        print("--- Emoji font not found locally or in system paths ---")
-        try:
-            print("--- Downloading NotoColorEmoji.ttf (this may take a few seconds) ---")
-            import urllib.request
-            url = "https://github.com/googlefonts/noto-emoji/raw/main/fonts/NotoColorEmoji.ttf"
-            urllib.request.urlretrieve(url, local_font)
-            print("--- Font downloaded successfully ---")
-            return local_font
-        except Exception as e:
-            print(f"--- Failed to download font: {e} ---")
-            
-        return None # Will fallback to default font in create_mosaic
+        return None # Fallback just in case
+
 
 
     def get_best_emoji(self, rgb):
