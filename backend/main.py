@@ -4,7 +4,7 @@ import time
 from PIL import Image
 import pillow_avif
 from fastapi import FastAPI, UploadFile, File, Form, BackgroundTasks, HTTPException, Query
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from engine import EmojiMosaicEngine
@@ -48,8 +48,34 @@ app.add_middleware(
 # Initialize Engine
 engine = EmojiMosaicEngine(os.path.join(DATA_DIR, "emojis.csv"))
 
-# Serve outputs as static files
-app.mount("/outputs", StaticFiles(directory=OUTPUT_DIR), name="outputs")
+# Custom route for serving outputs with explicit CORS headers
+@app.get("/outputs/{filename}")
+async def serve_output(filename: str):
+    file_path = os.path.join(OUTPUT_DIR, filename)
+    if not os.path.exists(file_path):
+        raise HTTPException(status_code=404, detail="File not found")
+    
+    return FileResponse(
+        file_path, 
+        headers={
+            "Access-Control-Allow-Origin": "*",
+            "Cross-Origin-Resource-Policy": "cross-origin",
+            "Cache-Control": "no-cache"
+        }
+    )
+
+# Debug route to check files on server
+@app.get("/debug-files")
+async def debug_files():
+    files = []
+    if os.path.exists(OUTPUT_DIR):
+        files = os.listdir(OUTPUT_DIR)
+    return {
+        "output_dir": OUTPUT_DIR,
+        "exists": os.path.exists(OUTPUT_DIR),
+        "files": files,
+        "base_dir": BASE_DIR
+    }
 
 # Task tracking
 tasks = {}
