@@ -88,10 +88,10 @@ class EmojiMosaicEngine:
         w, h = img.size
         
         # Fidelity Scale (1-10):
-        # q=1 -> 40 columns (Draft)
-        # q=3 -> 80 columns (High Detail - NEW DEFAULT)
-        # q=10 -> 220 columns (Extreme Masterpiece)
-        target_cols = 20 + (quality * 20)
+        # q=1 -> 60 columns
+        # q=3 -> 120 columns (Sweet Spot - Default)
+        # q=10 -> 330 columns (Extreme Detail)
+        target_cols = 30 + (quality * 30)
         
         # Calculate window size to hit our target columns
         analysis_window = max(1, w // target_cols)
