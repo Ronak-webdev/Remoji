@@ -1,8 +1,8 @@
-fastapi==0.110.0
-uvicorn==0.27.1
-python-multipart==0.0.9
-Pillow==10.2.0
-pillow-avif-plugin==1.5.5
-numpy==1.26.4
-pandas==2.2.1
-scipy==1.12.0
+fastapi
+uvicorn
+python-multipart
+Pillow
+pillow-avif-plugin
+numpy
+pandas
+scipy
