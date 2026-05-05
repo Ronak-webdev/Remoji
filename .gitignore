@@ -1,0 +1,28 @@
+# Node
+node_modules/
+frontend/node_modules/
+frontend/dist/
+frontend/.env
+frontend/.env.local
+
+# Python
+backend/venv/
+backend/__pycache__/
+*.py[cod]
+*$py.class
+.env
+.venv
+env/
+venv/
+ENV/
+
+# Project Specific
+uploads/*
+!uploads/.gitkeep
+outputs/*
+!outputs/.gitkeep
+data/emoji_data.pkl
+
+# OS
+.DS_Store
+Thumbs.db
