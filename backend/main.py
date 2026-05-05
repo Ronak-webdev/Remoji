@@ -18,7 +18,7 @@ DATA_DIR = os.path.join(BASE_DIR, "data")
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
-def cleanup_old_files(max_age_seconds=3600):
+def cleanup_old_files(max_age_seconds=600):
     """Delete files older than max_age_seconds from uploads and outputs"""
     now = time.time()
     for folder in [UPLOAD_DIR, OUTPUT_DIR]:
@@ -77,7 +77,7 @@ async def debug_files():
         "base_dir": BASE_DIR
     }
 
-# Task tracking
+# Task tracking (In-memory, limited to ~10,000 tasks on Render Free Tier)
 tasks = {}
 
 EXPORT_FORMATS = {
@@ -192,6 +192,10 @@ async def export_image(
         media_type=f"image/{'jpeg' if format.lower() in {'jpg', 'jpeg'} else format.lower()}",
         filename=os.path.basename(export_path),
     )
+
+@app.get("/ping")
+async def ping():
+    return {"status": "ok", "timestamp": time.time()}
 
 @app.get("/")
 async def root():
