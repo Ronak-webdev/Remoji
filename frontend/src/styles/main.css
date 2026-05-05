@@ -562,10 +562,14 @@ header p {
   }
 
   .img-wrapper .label {
-    padding: 8px 18px;
-    font-size: 0.75rem;
-    bottom: 20px;
-    letter-spacing: 0.5px;
+    padding: 4px 12px;
+    font-size: 0.65rem;
+    bottom: 12px;
+    letter-spacing: 0.2px;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(4px);
+    border-radius: 6px;
+    font-weight: 600;
   }
 }
 
@@ -681,7 +685,7 @@ header p {
 
 .btn-primary {
   background: var(--primary);
-  color: white;
+  color: #000000;
   box-shadow: 0 10px 30px rgba(255, 170, 0, 0.3);
   position: relative;
   overflow: hidden;

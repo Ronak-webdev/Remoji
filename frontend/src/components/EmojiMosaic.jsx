@@ -838,6 +838,7 @@ const EmojiMosaic = () => {
   };
 
   return (
+    <div className="app-container">
       {/* Connection Status Indicator */}
       <div className={`backend-status ${isBackendOnline === true ? 'online' : isBackendOnline === false ? 'offline' : ''}`}>
         <div className="status-dot"></div>
