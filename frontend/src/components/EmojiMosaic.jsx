@@ -661,13 +661,7 @@ const EmojiMosaic = () => {
   // Refs
   const fileInputRef = useRef(null);
 
-  // Lock body scroll when expanded
-  useEffect(() => {
-    document.body.style.overflow = isExpanded ? 'hidden' : 'auto';
-    return () => {
-      document.body.style.overflow = 'auto';
-    };
-  }, [isExpanded]);
+  // No more manual scroll manipulation - handled by CSS
 
   // File Selection Handler
   const handleFileSelect = (e) => {
@@ -839,12 +833,6 @@ const EmojiMosaic = () => {
 
   return (
     <div className="app-container">
-      {/* Connection Status Indicator */}
-      <div className={`backend-status ${isBackendOnline === true ? 'online' : isBackendOnline === false ? 'offline' : ''}`}>
-        <div className="status-dot"></div>
-        <span>{isBackendOnline === true ? 'Backend Live' : isBackendOnline === false ? 'Backend Offline' : 'Connecting...'}</span>
-        {isBackendOnline === false && <small> (Check VITE_API_URL)</small>}
-      </div>
 
       {/* Header */}
       <AnimatePresence>
