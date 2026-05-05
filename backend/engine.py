@@ -5,105 +5,141 @@ from PIL import Image, ImageDraw, ImageFont, ImageEnhance
 import pillow_avif
 from scipy.spatial import KDTree
 
+
 class EmojiMosaicEngine:
     def __init__(self, dataset_path):
-        # Load dataset
         self.df = pd.read_csv(dataset_path)
         self.emojis = self.df['emoji'].values
-        # Normalize colors to 0-1
         self.emoji_rgb = self.df[['r', 'g', 'b']].values.astype(np.float32) / 255.0
-        
-        # Build KDTree for ultra-fast color matching
         self.tree = KDTree(self.emoji_rgb)
-        
-        # Smart Font Handling for Cross-Platform (Windows/Linux/Cloud)
-        self.font_path = self._find_emoji_font()
-        self.cache = {}
 
-    def _find_emoji_font(self):
-        """Finds the best available emoji font on the current system"""
-        # Always use the bundled font file we just downloaded
-        local_font = os.path.join(os.path.dirname(__file__), "NotoColorEmoji.ttf")
-        if os.path.exists(local_font):
-            return local_font
-            
-        return None # Fallback just in case
+        # Directory of pre-downloaded emoji PNGs (Twemoji 72x72)
+        self.png_dir = os.path.join(os.path.dirname(__file__), "emoji_pngs")
 
+        # Precompute filename for every emoji so we don't do it per-pixel
+        self.emoji_filenames = [self._emoji_to_filename(e) for e in self.emojis]
 
+        # LRU-style image cache (keep up to 1024 resized sprites)
+        self._sprite_cache = {}
+        self._cache_size_limit = 1024
 
-    def get_best_emoji(self, rgb):
-        """Find the closest emoji using KDTree (Euclidean distance in RGB)"""
-        # Normalize input RGB
-        rgb_norm = rgb / 255.0
+        # Font fallback (kept for text-only mode if PNGs unavailable)
+        self._font_path = self._find_font()
+        print(f"PNG dir: {self.png_dir} | exists: {os.path.exists(self.png_dir)}")
+        if os.path.exists(self.png_dir):
+            print(f"  Sample PNGs: {os.listdir(self.png_dir)[:5]}")
+
+    # ------------------------------------------------------------------
+    # Helpers
+    # ------------------------------------------------------------------
+
+    @staticmethod
+    def _emoji_to_filename(emoji_char):
+        """Match Twemoji naming: hex codepoints (without FE0F) joined by '-'."""
+        parts = []
+        for ch in emoji_char:
+            cp = ord(ch)
+            if cp == 0xFE0F:  # variation selector-16 – skip
+                continue
+            parts.append(format(cp, 'x'))
+        return '-'.join(parts)
+
+    def _find_font(self):
+        local = os.path.join(os.path.dirname(__file__), "NotoColorEmoji.ttf")
+        if os.path.exists(local):
+            return local
+        return None
+
+    def _get_sprite(self, emoji_index, size):
+        """Return a PIL Image (RGBA) for the emoji at `size`×`size`."""
+        key = (emoji_index, size)
+        if key in self._sprite_cache:
+            return self._sprite_cache[key]
+
+        filename = self.emoji_filenames[emoji_index]
+        png_path = os.path.join(self.png_dir, f"{filename}.png")
+
+        if os.path.exists(png_path):
+            try:
+                img = Image.open(png_path).convert("RGBA")
+                img = img.resize((size, size), Image.Resampling.LANCZOS)
+                if len(self._sprite_cache) >= self._cache_size_limit:
+                    # Evict oldest entry
+                    self._sprite_cache.pop(next(iter(self._sprite_cache)))
+                self._sprite_cache[key] = img
+                return img
+            except Exception as e:
+                print(f"  Sprite load error {filename}: {e}")
+
+        # Fallback: solid color square matching the emoji's representative color
+        color = tuple((self.emoji_rgb[emoji_index] * 255).astype(np.uint8)) + (255,)
+        img = Image.new("RGBA", (size, size), color)
+        self._sprite_cache[key] = img
+        return img
+
+    def get_best_emoji_index(self, rgb):
+        rgb_norm = np.array(rgb, dtype=np.float32) / 255.0
         _, index = self.tree.query(rgb_norm)
-        return self.emojis[index]
+        return int(index)
+
+    # ------------------------------------------------------------------
+    # Main mosaic generator
+    # ------------------------------------------------------------------
 
     def create_mosaic(self, input_path, output_path, config):
-        """
-        Generates a high-fidelity emoji mosaic with minimum, smart parameters.
-        - quality: 1 (Draft) to 5 (Masterpiece)
-        - emoji_size: Final size of emojis in px
-        """
-        quality = int(config.get('quality', 3))
+        quality    = int(config.get('quality', 3))
         emoji_size = int(config.get('emoji_size', 16))
-        
+
         print(f"--- Starting mosaic creation: quality={quality}, size={emoji_size} ---")
-        
-        # Load image
+
         img = Image.open(input_path).convert('RGB')
         w, h = img.size
-        
-        # Fidelity Scale (1-10):
-        # q=1 -> 40 columns (Draft)
-        # q=3 -> 80 columns (High Detail - NEW DEFAULT)
-        # q=10 -> 220 columns (Extreme Masterpiece)
-        target_cols = 20 + (quality * 20)
-        
-        # Calculate window size to hit our target columns
+
+        target_cols     = 20 + (quality * 20)
         analysis_window = max(1, w // target_cols)
-        
         cols = w // analysis_window
         rows = h // analysis_window
-        
-        # Resize image to the grid size for bulk processing
-        img_small = img.resize((cols, rows), Image.Resampling.LANCZOS)
-        # Enhance contrast slightly to make colors pop
-        img_small = ImageEnhance.Contrast(img_small).enhance(1.1)
-        pixels = np.array(img_small)
-        
-        # Free up memory from small image after getting pixels
-        del img_small
-        
-        # Output canvas dimensions (2x scale for high-quality zoom)
-        out_w = cols * emoji_size * 2
-        out_h = rows * emoji_size * 2
-        
-        # Create high-res canvas (Opaque background to prevent invisible images if emojis fail to load)
-        output = Image.new('RGBA', (out_w, out_h), (245, 245, 245, 255))
-        draw = ImageDraw.Draw(output)
-        
-        # Load font - scaled to fit emoji_size (with 2x scaling)
-        try:
-            # Overlap emojis slightly (1.2x) to prevent gaps and create a rich texture
-            font = ImageFont.truetype(self.font_path, int(emoji_size * 2 * 1.2))
-        except:
-            font = ImageFont.load_default()
 
-        # Generate mosaic
-        for r in range(rows):
-            for c in range(cols):
-                rgb = pixels[r, c]
-                
-                # Process every pixel for full coverage
-                emoji = self.get_best_emoji(rgb)
-                
-                x = c * emoji_size * 2
-                y = r * emoji_size * 2
-                
-                # Draw the emoji with embedded color support
-                draw.text((x, y), emoji, font=font, embedded_color=True)
-        
-        # Convert back to RGB or keep RGBA if needed
+        img_small = img.resize((cols, rows), Image.Resampling.LANCZOS)
+        img_small = ImageEnhance.Contrast(img_small).enhance(1.1)
+        pixels    = np.array(img_small)
+        del img_small
+
+        out_w = cols * emoji_size
+        out_h = rows * emoji_size
+
+        output = Image.new('RGBA', (out_w, out_h), (245, 245, 245, 255))
+
+        png_available = os.path.exists(self.png_dir) and bool(os.listdir(self.png_dir))
+        print(f"  PNG mode: {png_available}  |  cols={cols}  rows={rows}  out={out_w}x{out_h}")
+
+        if png_available:
+            # ---- PNG sprite mode (color, cross-platform) ----
+            for r in range(rows):
+                for c in range(cols):
+                    idx    = self.get_best_emoji_index(pixels[r, c])
+                    sprite = self._get_sprite(idx, emoji_size)
+                    x = c * emoji_size
+                    y = r * emoji_size
+                    output.paste(sprite, (x, y), sprite)
+        else:
+            # ---- Text font fallback ----
+            draw = ImageDraw.Draw(output)
+            try:
+                font = ImageFont.truetype(self._font_path, int(emoji_size * 1.2)) if self._font_path else ImageFont.load_default()
+            except Exception:
+                font = ImageFont.load_default()
+            for r in range(rows):
+                for c in range(cols):
+                    idx   = self.get_best_emoji_index(pixels[r, c])
+                    emoji = self.emojis[idx]
+                    x = c * emoji_size
+                    y = r * emoji_size
+                    try:
+                        draw.text((x, y), emoji, font=font, embedded_color=True)
+                    except Exception:
+                        draw.text((x, y), emoji, font=font)
+
         print(f"--- Saving final output to {output_path} ---")
-        output.save(output_path, "PNG")
+        output.convert('RGB').save(output_path, "PNG", compress_level=3)
         return output_path
