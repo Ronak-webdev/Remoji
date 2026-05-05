@@ -16,9 +16,32 @@ class EmojiMosaicEngine:
         # Build KDTree for ultra-fast color matching
         self.tree = KDTree(self.emoji_rgb)
         
-        # Windows Emoji Font path
-        self.font_path = "C:\\Windows\\Fonts\\seguiemj.ttf"
+        # Smart Font Handling for Cross-Platform (Windows/Linux/Cloud)
+        self.font_path = self._find_emoji_font()
         self.cache = {}
+
+    def _find_emoji_font(self):
+        """Finds the best available emoji font on the current system"""
+        # 1. Check for local font file (recommended for deployment)
+        local_font = os.path.join(os.path.dirname(__file__), "NotoColorEmoji.ttf")
+        if os.path.exists(local_font):
+            return local_font
+            
+        # 2. Check Windows Path
+        win_font = "C:\\Windows\\Fonts\\seguiemj.ttf"
+        if os.path.exists(win_font):
+            return win_font
+            
+        # 3. Check Linux Paths (Common on Render/Ubuntu)
+        linux_paths = [
+            "/usr/share/fonts/truetype/noto/NotoColorEmoji.ttf",
+            "/usr/share/fonts/noto/NotoColorEmoji.ttf"
+        ]
+        for path in linux_paths:
+            if os.path.exists(path):
+                return path
+        
+        return None # Will fallback to default font in create_mosaic
 
     def get_best_emoji(self, rgb):
         """Find the closest emoji using KDTree (Euclidean distance in RGB)"""
