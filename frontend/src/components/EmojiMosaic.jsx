@@ -585,6 +585,20 @@ const EmojiMosaic = () => {
   const [exportFormat, setExportFormat] = useState('png');
   const [exportQuality, setExportQuality] = useState('original');
   const [showDownloadPanel, setShowDownloadPanel] = useState(false);
+  const [isBackendOnline, setIsBackendOnline] = useState(null);
+
+  // Check backend health on mount
+  useEffect(() => {
+    const checkHealth = async () => {
+      try {
+        await axios.get(`${API_BASE_URL}/`);
+        setIsBackendOnline(true);
+      } catch (err) {
+        setIsBackendOnline(false);
+      }
+    };
+    checkHealth();
+  }, []);
 
   // Theme Sync
   useEffect(() => {
@@ -773,7 +787,13 @@ const EmojiMosaic = () => {
   };
 
   return (
-    <div className={`app-container ${previewUrl ? 'has-image' : ''}`}>
+      {/* Connection Status Indicator */}
+      <div className={`backend-status ${isBackendOnline === true ? 'online' : isBackendOnline === false ? 'offline' : ''}`}>
+        <div className="status-dot"></div>
+        <span>{isBackendOnline === true ? 'Backend Live' : isBackendOnline === false ? 'Backend Offline' : 'Connecting...'}</span>
+        {isBackendOnline === false && <small> (Check VITE_API_URL)</small>}
+      </div>
+
       {/* Header */}
       <AnimatePresence>
         {!previewUrl && !isExpanded && (
