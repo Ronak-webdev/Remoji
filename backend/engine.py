@@ -101,13 +101,6 @@ class EmojiMosaicEngine:
         
         # Resize image to the grid size for bulk processing
         img_small = img.resize((cols, rows), Image.Resampling.LANCZOS)
-        
-        # Color Tuning for Natural Look:
-        # 1. Boost Saturation (makes greens greener, avoiding muddy browns)
-        img_small = ImageEnhance.Color(img_small).enhance(1.3)
-        # 2. Enhance contrast slightly to make colors pop
-        img_small = ImageEnhance.Contrast(img_small).enhance(1.1)
-        
         pixels = np.array(img_small)
         
         # Output canvas dimensions (2x scale for high-quality zoom)

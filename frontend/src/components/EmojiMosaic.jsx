@@ -661,7 +661,14 @@ const EmojiMosaic = () => {
   // Refs
   const fileInputRef = useRef(null);
 
-  // No more manual scroll manipulation - handled by CSS
+
+  // Lock body scroll when expanded
+  useEffect(() => {
+    document.body.style.overflow = isExpanded ? 'hidden' : 'auto';
+    return () => {
+      document.body.style.overflow = 'auto';
+    };
+  }, [isExpanded]);
 
   // File Selection Handler
   const handleFileSelect = (e) => {
