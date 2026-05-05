@@ -1,7 +1,7 @@
 import os
 import numpy as np
 import pandas as pd
-from PIL import Image, ImageEnhance
+from PIL import Image, ImageEnhance, ImageOps
 from scipy.spatial import KDTree
 
 class EmojiMosaicEngine:
@@ -82,8 +82,9 @@ class EmojiMosaicEngine:
         quality = int(config.get('quality', 3))
         emoji_size = int(config.get('emoji_size', 16))
         
-        # Load image
-        img = Image.open(input_path).convert('RGB')
+        # Load image and fix orientation based on EXIF
+        img = Image.open(input_path)
+        img = ImageOps.exif_transpose(img).convert('RGB')
         w, h = img.size
         
         # Fidelity Scale (1-10):

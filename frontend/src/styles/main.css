@@ -38,8 +38,8 @@ body {
   font-family: 'Outfit', sans-serif;
   background-color: var(--bg);
   color: var(--text);
-  min-height: 100vh;
-  overflow-x: hidden;
+  height: 100vh;
+  overflow: hidden;
   transition: background-color 0.3s ease, color 0.3s ease;
 }
 
@@ -559,6 +559,13 @@ header p {
     right: 12px;
     width: 48px;
     height: 48px;
+  }
+
+  .img-wrapper .label {
+    padding: 8px 18px;
+    font-size: 0.75rem;
+    bottom: 20px;
+    letter-spacing: 0.5px;
   }
 }
 

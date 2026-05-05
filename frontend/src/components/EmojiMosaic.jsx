@@ -91,6 +91,52 @@ const ZoomViewer = ({ imageUrl, onClose, onDownload }) => {
     setDragging(false);
   };
 
+  const [initialPinchDistance, setInitialPinchDistance] = useState(null);
+
+  const handleTouchStart = (e) => {
+    if (e.touches.length === 1) {
+      const touch = e.touches[0];
+      setDragging(true);
+      setDragStart({
+        x: touch.clientX - position.x,
+        y: touch.clientY - position.y
+      });
+    } else if (e.touches.length === 2) {
+      const distance = Math.hypot(
+        e.touches[0].clientX - e.touches[1].clientX,
+        e.touches[0].clientY - e.touches[1].clientY
+      );
+      setInitialPinchDistance(distance);
+    }
+  };
+
+  const handleTouchMove = useCallback((e) => {
+    if (e.touches.length === 1 && dragging) {
+      const touch = e.touches[0];
+      const newPos = {
+        x: touch.clientX - dragStart.x,
+        y: touch.clientY - dragStart.y
+      };
+      setPosition(clampPosition(newPos, scale));
+    } else if (e.touches.length === 2) {
+      e.preventDefault(); 
+      const distance = Math.hypot(
+        e.touches[0].clientX - e.touches[1].clientX,
+        e.touches[0].clientY - e.touches[1].clientY
+      );
+      if (initialPinchDistance) {
+        const delta = distance / initialPinchDistance;
+        setScale(prevScale => Math.max(0.5, Math.min(25, prevScale * delta)));
+        setInitialPinchDistance(distance);
+      }
+    }
+  }, [dragging, dragStart, scale, clampPosition, initialPinchDistance]);
+
+  const handleTouchEnd = () => {
+    setDragging(false);
+    setInitialPinchDistance(null);
+  };
+
   // Double click to reset
   const handleDoubleClick = () => {
     setScale(1);
@@ -122,13 +168,17 @@ const ZoomViewer = ({ imageUrl, onClose, onDownload }) => {
     window.addEventListener('wheel', handleWheel, { passive: false });
     window.addEventListener('mousemove', handleMouseMove);
     window.addEventListener('mouseup', handleMouseUp);
+    window.addEventListener('touchmove', handleTouchMove, { passive: false });
+    window.addEventListener('touchend', handleTouchEnd);
 
     return () => {
       window.removeEventListener('wheel', handleWheel);
       window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('mouseup', handleMouseUp);
+      window.removeEventListener('touchmove', handleTouchMove);
+      window.removeEventListener('touchend', handleTouchEnd);
     };
-  }, [handleWheel, handleMouseMove]);
+  }, [handleWheel, handleMouseMove, handleTouchMove]);
 
   return ReactDOM.createPortal(
     <motion.div 
@@ -164,6 +214,7 @@ const ZoomViewer = ({ imageUrl, onClose, onDownload }) => {
         className="expanded-stage"
         ref={containerRef}
         onMouseDown={handleMouseDown}
+        onTouchStart={handleTouchStart}
         onDoubleClick={handleDoubleClick}
         style={{ 
           cursor: scale > 1 ? (dragging ? 'grabbing' : 'grab') : 'default' 
