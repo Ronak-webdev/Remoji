@@ -413,7 +413,7 @@ const FolderUpload = ({ onChange }) => {
   );
 };
 
-const SettingsPanel = ({ quality, emojiSize, contrast, saturation, onQualityChange, onEmojiSizeChange, onContrastChange, onSaturationChange, onClose, theme, onThemeToggle }) => {
+const SettingsPanel = ({ quality, emojiSize, contrast, saturation, overlay, onQualityChange, onEmojiSizeChange, onContrastChange, onSaturationChange, onOverlayChange, onClose, theme, onThemeToggle }) => {
   return (
     <>
       {/* Backdrop - closes settings on click */}
@@ -524,6 +524,26 @@ const SettingsPanel = ({ quality, emojiSize, contrast, saturation, onQualityChan
               />
             </div>
             <small>0 = B&W | 2x = Vivid</small>
+          </div>
+
+          {/* Masterpiece Overlay Control */}
+          <div className="control-group">
+            <label>Color Accuracy: {Math.round(overlay * 100)}%</label>
+            <div className="slider-container">
+              <input
+                type="range"
+                min="0"
+                max="0.4"
+                step="0.05"
+                value={overlay}
+                onChange={(e) => onOverlayChange(parseFloat(e.target.value))}
+                className="slider"
+                style={{
+                  background: `linear-gradient(to right, var(--primary) 0%, var(--primary) ${(overlay / 0.4) * 100}%, var(--glass-border) ${(overlay / 0.4) * 100}%, var(--glass-border) 100%)`
+                }}
+              />
+            </div>
+            <small>0% = Pure Emoji | 40% = Ultra Accurate</small>
           </div>
         </div>
 
@@ -639,6 +659,7 @@ const EmojiMosaic = () => {
   const [saturation, setSaturation] = useState(1);
   const [exportFormat, setExportFormat] = useState('png');
   const [exportQuality, setExportQuality] = useState('original');
+  const [overlay, setOverlay] = useState(0.15);
   const [showDownloadPanel, setShowDownloadPanel] = useState(false);
   const [isBackendOnline, setIsBackendOnline] = useState(null);
 
@@ -713,6 +734,7 @@ const EmojiMosaic = () => {
     formData.append('emoji_size', emojiSize);
     formData.append('contrast', contrast);
     formData.append('saturation', saturation);
+    formData.append('overlay', overlay);
 
     try {
       // Upload image
@@ -1011,10 +1033,12 @@ const EmojiMosaic = () => {
             emojiSize={emojiSize}
             contrast={contrast}
             saturation={saturation}
+            overlay={overlay}
             onQualityChange={setQuality}
             onEmojiSizeChange={setEmojiSize}
             onContrastChange={setContrast}
             onSaturationChange={setSaturation}
+            onOverlayChange={setOverlay}
             onClose={() => setShowSettings(false)}
             theme={theme}
             onThemeToggle={toggleTheme}
