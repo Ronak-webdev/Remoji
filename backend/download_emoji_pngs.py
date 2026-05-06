@@ -14,31 +14,27 @@ OUT_DIR  = os.path.join(os.path.dirname(__file__), "emoji_pngs")
 os.makedirs(OUT_DIR, exist_ok=True)
 
 def emoji_to_filename(emoji_char):
-    """Convert emoji character to Twemoji filename (hex codepoints joined by -)."""
-    codepoints = []
-    i = 0
-    chars = list(emoji_char)
+    """Convert emoji to Apple-style filename (lower case hex)."""
     result = []
-    # Walk through codepoints, skip variation selectors (FE0F) and ZWJ
     for ch in emoji_char:
         cp = ord(ch)
-        if cp == 0xFE0F:   # variation selector - skip
-            continue
+        if cp in (0xFE0F, 0xFE0E): continue
         result.append(format(cp, 'x'))
     return '-'.join(result)
 
-def get_twemoji_url(filename):
-    # Switching to Google Noto Emoji for higher detail and vibrancy
-    return f"https://fonts.gstatic.com/s/e/notoemoji/latest/{filename}/512.png"
+def get_apple_emoji_url(filename):
+    # Apple 160x160 high quality PNGs from iamcal/emoji-data
+    return f"https://raw.githubusercontent.com/iamcal/emoji-data/master/img-apple-160/{filename}.png"
 
 # Read unique emojis from CSV
 unique_emojis = set()
-with open(CSV_PATH, newline='', encoding='utf-8') as f:
-    reader = csv.DictReader(f)
-    for row in reader:
-        unique_emojis.add(row['emoji'])
+if os.path.exists(CSV_PATH):
+    with open(CSV_PATH, newline='', encoding='utf-8') as f:
+        reader = csv.DictReader(f)
+        for row in reader:
+            unique_emojis.add(row['emoji'])
 
-print(f"Found {len(unique_emojis)} unique emojis in CSV. Starting download...")
+print(f"Found {len(unique_emojis)} unique emojis in CSV. Starting High-Res Download...")
 
 success = 0
 failed = []
@@ -49,22 +45,19 @@ for emoji_char in unique_emojis:
     
     if os.path.exists(out_path):
         success += 1
-        continue  # Already downloaded
+        continue
     
-    url = get_twemoji_url(filename)
+    url = get_apple_emoji_url(filename)
     try:
         urllib.request.urlretrieve(url, out_path)
         success += 1
-        print(f"  ✓ {emoji_char} -> {filename}.png")
+        if success % 50 == 0:
+            print(f"  Progress: {success} downloaded...")
     except Exception as e:
-        failed.append((emoji_char, filename, str(e)))
-        print(f"  ✗ {emoji_char} -> {filename}.png  ({e})")
+        # Some variation selectors or combinations might fail, we try without variation
+        failed.append((emoji_char, filename))
     
-    time.sleep(0.05)  # Be polite to CDN
+    time.sleep(0.02) # Fast download
 
-print(f"\n✅ Downloaded: {success}")
+print(f"\n✅ High-Res Downloaded: {success}")
 print(f"❌ Failed: {len(failed)}")
-if failed:
-    print("\nFailed emojis (will use color-fill fallback):")
-    for emoji_char, filename, err in failed:
-        print(f"  {emoji_char}  ({filename})  -> {err}")

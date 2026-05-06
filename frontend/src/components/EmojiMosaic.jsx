@@ -183,6 +183,7 @@ const ZoomViewer = ({ imageUrl, onClose, onDownload }) => {
   return ReactDOM.createPortal(
     <motion.div
       className="fullscreen-overlay"
+      style={{ zIndex: 1000000 }}
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
@@ -205,7 +206,7 @@ const ZoomViewer = ({ imageUrl, onClose, onDownload }) => {
           e.stopPropagation();
           onDownload();
         }}
-        title="Download Masterpiece"
+        title="Download Options"
       >
         <Download size={22} />
       </button>
@@ -568,11 +569,17 @@ const PreviewCard = ({ isLoading, imageSrc, label, onClick, isInput = false, onF
 
   return (
     <motion.div
-      className="preview-card"
+      className={`preview-card ${imageSrc && isInput ? 'no-click' : ''}`}
       initial={{ opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
       exit={{ opacity: 0, y: -100, transition: { duration: 0.4 } }}
-      onClick={imageSrc && isInput ? undefined : onClick}
+      onClick={(e) => {
+        if (imageSrc && isInput) {
+          e.stopPropagation();
+          return;
+        }
+        if (onClick) onClick();
+      }}
       style={{ cursor: imageSrc && isInput ? 'default' : onClick ? 'pointer' : 'default' }}
     >
       {isLoading ? (
@@ -932,8 +939,8 @@ const EmojiMosaic = () => {
             imageUrl={outputUrl}
             onClose={() => setIsExpanded(false)}
             onDownload={() => {
-              setIsExpanded(false);
-              setTimeout(() => setShowDownloadPanel(true), 100);
+              // Direct open without closing expanded view to prevent flicker
+              setShowDownloadPanel(true);
             }}
           />
         )}
