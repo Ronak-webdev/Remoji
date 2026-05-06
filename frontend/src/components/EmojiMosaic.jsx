@@ -413,11 +413,7 @@ const FolderUpload = ({ onChange }) => {
   );
 };
 
-// ========== SETTINGS PANEL ==========
-const SettingsPanel = ({ quality, emojiSize, onQualityChange, onEmojiSizeChange, onClose, theme, onThemeToggle }) => {
-  const [contrast, setContrast] = useState(1.1);
-  const [saturation, setSaturation] = useState(1);
-
+const SettingsPanel = ({ quality, emojiSize, contrast, saturation, onQualityChange, onEmojiSizeChange, onContrastChange, onSaturationChange, onClose, theme, onThemeToggle }) => {
   return (
     <>
       {/* Backdrop - closes settings on click */}
@@ -500,7 +496,7 @@ const SettingsPanel = ({ quality, emojiSize, onQualityChange, onEmojiSizeChange,
                 max="2"
                 step="0.1"
                 value={contrast}
-                onChange={(e) => setContrast(parseFloat(e.target.value))}
+                onChange={(e) => onContrastChange(parseFloat(e.target.value))}
                 className="slider"
                 style={{
                   background: `linear-gradient(to right, var(--primary) 0%, var(--primary) ${((contrast - 0.5) / 1.5) * 100}%, var(--glass-border) ${((contrast - 0.5) / 1.5) * 100}%, var(--glass-border) 100%)`
@@ -520,7 +516,7 @@ const SettingsPanel = ({ quality, emojiSize, onQualityChange, onEmojiSizeChange,
                 max="2"
                 step="0.1"
                 value={saturation}
-                onChange={(e) => setSaturation(parseFloat(e.target.value))}
+                onChange={(e) => onSaturationChange(parseFloat(e.target.value))}
                 className="slider"
                 style={{
                   background: `linear-gradient(to right, var(--primary) 0%, var(--primary) ${(saturation / 2) * 100}%, var(--glass-border) ${(saturation / 2) * 100}%, var(--glass-border) 100%)`
@@ -714,6 +710,8 @@ const EmojiMosaic = () => {
     formData.append('image', selectedFile);
     formData.append('quality', quality);
     formData.append('emoji_size', emojiSize);
+    formData.append('contrast', contrast);
+    formData.append('saturation', saturation);
 
     try {
       // Upload image
@@ -999,8 +997,12 @@ const EmojiMosaic = () => {
           <SettingsPanel
             quality={quality}
             emojiSize={emojiSize}
+            contrast={contrast}
+            saturation={saturation}
             onQualityChange={setQuality}
             onEmojiSizeChange={setEmojiSize}
+            onContrastChange={setContrast}
+            onSaturationChange={setSaturation}
             onClose={() => setShowSettings(false)}
             theme={theme}
             onThemeToggle={toggleTheme}

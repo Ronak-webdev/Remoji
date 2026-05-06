@@ -93,7 +93,9 @@ async def upload_image(
     background_tasks: BackgroundTasks,
     image: UploadFile = File(...),
     quality: int = Form(3),
-    emoji_size: int = Form(16)
+    emoji_size: int = Form(16),
+    contrast: float = Form(1.1),
+    saturation: float = Form(1.0)
 ):
     task_id = str(uuid.uuid4())
     file_ext = os.path.splitext(image.filename)[1]
@@ -106,7 +108,9 @@ async def upload_image(
     
     config = {
         "quality": quality,
-        "emoji_size": emoji_size
+        "emoji_size": emoji_size,
+        "contrast": contrast,
+        "saturation": saturation
     }
     print(f"DEBUG: Received upload request with config: {config}")
     

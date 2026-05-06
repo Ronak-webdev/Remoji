@@ -72,19 +72,32 @@ class EmojiMosaicEngine:
     def create_mosaic(self, input_path, output_path, config):
         quality = int(config.get('quality', 3))
         emoji_size = int(config.get('emoji_size', 16))
+        contrast_val = float(config.get('contrast', 1.1))
+        saturation_val = float(config.get('saturation', 1.0))
         
         # Load image and fix orientation
         img = Image.open(input_path)
         img = ImageOps.exif_transpose(img).convert('RGB')
+        
+        # Apply Contrast and Saturation
+        if contrast_val != 1.0:
+            from PIL import ImageEnhance
+            img = ImageEnhance.Contrast(img).enhance(contrast_val)
+        if saturation_val != 1.0:
+            from PIL import ImageEnhance
+            img = ImageEnhance.Color(img).enhance(saturation_val)
+            
         w, h = img.size
         
         # Fidelity Scale (1-10)
-        # Formula: 10 + (quality^2 * 2)
-        # q=1 -> 12 columns (Draft)
-        # q=5 -> 60 columns (Matches old q=1 as requested!)
-        # q=10 -> 210 columns (Extreme Masterpiece)
-        target_cols = 10 + (quality ** 2) * 2
-        print(f"DEBUG: Processing mosaic with target_cols={target_cols}, emoji_size={emoji_size}")
+        # As requested: what was achieved at 7 (108 cols) is now achieved at 1 or 2.
+        # target_cols = 60 + (quality * 20)
+        # q=1 -> 80 columns
+        # q=2 -> 100 columns
+        # q=3 -> 120 columns (Default)
+        # q=10 -> 260 columns (Extreme Masterpiece)
+        target_cols = 60 + (quality * 20)
+        print(f"DEBUG: Processing mosaic with target_cols={target_cols}, emoji_size={emoji_size}, contrast={contrast_val}, saturation={saturation_val}")
         
         # Calculate window size to hit our target columns
         analysis_window = max(1, w // target_cols)
