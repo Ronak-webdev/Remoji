@@ -200,7 +200,16 @@ const ZoomViewer = ({ imageUrl, onClose, onDownload }) => {
         Back
       </button>
 
-      {/* Download button removed from here as per user request */}
+      <button
+        className="download-expanded-btn"
+        onClick={(e) => {
+          e.stopPropagation();
+          onDownload();
+        }}
+        title="Download Masterpiece"
+      >
+        <Download size={22} />
+      </button>
 
       <div
         className="expanded-stage"
@@ -521,7 +530,6 @@ const SettingsPanel = ({ quality, emojiSize, contrast, saturation, onQualityChan
 
         <Sparkles size={18} />
         <p>Adjust before processing for best results</p>
-      </div>
 
       <button
         className="btn btn-primary"
@@ -929,7 +937,6 @@ const EmojiMosaic = () => {
             imageUrl={outputUrl}
             onClose={() => setIsExpanded(false)}
             onDownload={() => {
-              console.log("Opening download panel...");
               setShowDownloadPanel(true);
             }}
           />
@@ -1012,7 +1019,6 @@ const EmojiMosaic = () => {
             emojiSize={emojiSize}
             contrast={contrast}
             saturation={saturation}
-            overlay={overlay}
             onQualityChange={setQuality}
             onEmojiSizeChange={setEmojiSize}
             onContrastChange={setContrast}
