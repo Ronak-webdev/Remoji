@@ -814,15 +814,19 @@ const EmojiMosaic = () => {
               onClick={() => setShowSettings(!showSettings)}
               title="Settings"
             >
-              <Settings size={28} />
+              <Settings size={24} />
             </button>
-            {outputUrl && (
+
+            {outputUrl && !isLoading && (
               <button
-                className="settings-toggle"
-                onClick={() => setShowDownloadPanel(true)}
+                className="download-toggle"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowDownloadPanel(true);
+                }}
                 title="Download Masterpiece"
               >
-                <Download size={28} />
+                <Download size={24} />
               </button>
             )}
           </>

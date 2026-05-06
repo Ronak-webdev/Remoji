@@ -616,6 +616,11 @@ header p {
   margin-top: 3rem;
   flex-wrap: wrap;
   justify-content: center;
+  width: 100%;
+  max-width: 1200px;
+  margin-left: auto;
+  margin-right: auto;
+  align-items: center;
 }
 
 .btn {
@@ -952,9 +957,36 @@ header p {
 
 .download-toggle:hover,
 .settings-toggle:hover {
-  background: linear-gradient(90deg, rgba(255, 170, 0, 0.12), rgba(255, 68, 0, 0.06));
-  transform: translateY(-3px);
-  color: var(--text);
+  background: var(--primary);
+  transform: translateY(-3px) scale(1.05);
+  color: #000;
+  box-shadow: 0 8px 25px rgba(255, 170, 0, 0.5);
+}
+
+.download-toggle,
+.settings-toggle {
+  width: 52px !important;
+  height: 52px !important;
+  border-radius: 14px !important;
+  background: var(--glass) !important;
+  border: 1px solid var(--glass-border) !important;
+  color: var(--text) !important;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  backdrop-filter: blur(10px);
+}
+
+@media (max-width: 600px) {
+  .download-toggle,
+  .settings-toggle {
+    width: 48px !important;
+    height: 48px !important;
+    background: var(--primary) !important;
+    color: #000 !important;
+  }
 }
 
 .export-panel {
