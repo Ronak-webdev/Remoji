@@ -1,18 +1,18 @@
 import os
 import numpy as np
 import pandas as pd
-from PIL import Image, ImageOps
+from PIL import Image, ImageOps, ImageDraw, ImageEnhance
 from scipy.spatial import KDTree
 
 class EmojiMosaicEngine:
     def __init__(self, dataset_path):
-        # Load dataset (4136 emojis)
+        # Load dataset (3786+ emojis)
         self.df = pd.read_csv(dataset_path)
         self.emojis = self.df['emoji'].values
         # Simple RGB colors (0-1)
         self.emoji_rgb = self.df[['r', 'g', 'b']].values.astype(np.float32) / 255.0
         
-        # Build KDTree for ultra-fast simple RGB matching
+        # Build KDTree for ultra-fast matching
         self.tree = KDTree(self.emoji_rgb)
         
         if 'hex' in self.df.columns:
@@ -62,7 +62,7 @@ class EmojiMosaicEngine:
         return img
 
     def get_best_emoji_index(self, rgb):
-        """Simple RGB Euclidean distance matching"""
+        """Simple RGB matching"""
         rgb_norm = rgb / 255.0
         _, index = self.tree.query(rgb_norm)
         return index
@@ -71,12 +71,15 @@ class EmojiMosaicEngine:
         quality = int(config.get('quality', 3))
         emoji_size = int(config.get('emoji_size', 16))
         
+        # Super-Resolution Multiplier (2x for extreme sharpness)
+        SCALE = 2
+        
         img = Image.open(input_path)
         img = ImageOps.exif_transpose(img).convert('RGB')
         w, h = img.size
         
         # Fidelity Scale
-        target_cols = 30 + (quality * 15)
+        target_cols = 40 + (quality * 15)
         
         analysis_window = max(1, w // target_cols)
         cols = w // analysis_window
@@ -85,32 +88,47 @@ class EmojiMosaicEngine:
         img_small = img.resize((cols, rows), Image.Resampling.LANCZOS)
         pixels = np.array(img_small)
         
-        out_w = cols * emoji_size
-        out_h = rows * emoji_size
+        # Render at 2x Scale
+        out_w = cols * emoji_size * SCALE
+        out_h = rows * emoji_size * SCALE
         
         # Memory Protection
-        MAX_DIM = 8000
+        MAX_DIM = 12000 # Increased for Pro quality
         if out_w > MAX_DIM or out_h > MAX_DIM:
             scale_down = MAX_DIM / max(out_w, out_h)
             emoji_size = max(4, int(emoji_size * scale_down))
-            out_w = cols * emoji_size
-            out_h = rows * emoji_size
+            out_w = cols * emoji_size * SCALE
+            out_h = rows * emoji_size * SCALE
 
-        output = Image.new('RGBA', (out_w, out_h), (255, 255, 255, 0))
-        # 1.2x Overlap for rich texture and no gaps
-        sprite_size = int(emoji_size * 1.2)
+        # Solid background (white) to prevent any transparency leaks
+        output = Image.new('RGBA', (out_w, out_h), (255, 255, 255, 255))
+        draw = ImageDraw.Draw(output)
+        
+        # Aggressive 1.3x Overlap for depth
+        sprite_size = int(emoji_size * SCALE * 1.3)
 
-        print(f"DEBUG: Generating Simple Mosaic... (Cols: {cols})")
+        print(f"DEBUG: Generating Super-HD Mosaic... (Cols: {cols}, Res: {out_w}x{out_h})")
         for r in range(rows):
             for c in range(cols):
                 rgb = pixels[r, c]
+                
+                # POSITION (2x Scaled)
+                x = c * emoji_size * SCALE
+                y = r * emoji_size * SCALE
+                
+                # 1. GAP FILL: Draw target color background for this cell
+                shape = [x, y, x + emoji_size * SCALE, y + emoji_size * SCALE]
+                draw.rectangle(shape, fill=tuple(rgb))
+                
+                # 2. EMOJI PASTE
                 idx = self.get_best_emoji_index(rgb)
-                
-                x = c * emoji_size
-                y = r * emoji_size
-                
                 sprite = self._get_sprite(idx, sprite_size)
-                output.paste(sprite, (x, y), sprite)
+                # Offset slightly to center the 1.3x larger sprite
+                offset = (sprite_size - (emoji_size * SCALE)) // 2
+                output.paste(sprite, (x - offset, y - offset), sprite)
+        
+        # Final Sharpening
+        output = ImageEnhance.Sharpness(output).enhance(1.1)
         
         output.save(output_path, "PNG")
         return output_path

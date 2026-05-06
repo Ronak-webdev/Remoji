@@ -78,15 +78,16 @@ def main():
 
     print(f"Total entries to process (including skin variations): {len(expanded_data)}")
 
-    # Sources with specific formatters
-    # 1. Apple (160x160)
-    # 2. Twemoji (72x72)
-    # 3. Noto Emoji (512x512)
+    # Sources in order of preference
+    # 1. Google Noto (512x512) - BEST QUALITY
+    # 2. JoyPixels (512x512 / fallback 128)
+    # 3. Apple (160x160)
+    # 4. Twemoji (72x72)
     sources = [
-        ("https://raw.githubusercontent.com/iamcal/emoji-data/master/img-apple-160/{}.png", lambda x: x.lower()),
-        ("https://cdn.jsdelivr.net/gh/twitter/twemoji@latest/assets/72x72/{}.png", lambda x: x.lower()),
         ("https://fonts.gstatic.com/s/e/notoemoji/latest/{}/512.png", lambda x: x.lower().replace("-fe0f", "")),
-        ("https://raw.githubusercontent.com/joypixels/emoji-assets/master/png/128/{}.png", lambda x: x.lower())
+        ("https://raw.githubusercontent.com/joypixels/emoji-assets/master/png/512/{}.png", lambda x: x.lower()),
+        ("https://raw.githubusercontent.com/iamcal/emoji-data/master/img-apple-160/{}.png", lambda x: x.lower()),
+        ("https://cdn.jsdelivr.net/gh/twitter/twemoji@latest/assets/72x72/{}.png", lambda x: x.lower())
     ]
     
     for item in expanded_data:
