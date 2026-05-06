@@ -101,6 +101,7 @@ async def upload_image(
         "quality": quality,
         "emoji_size": emoji_size
     }
+    print(f"DEBUG: Received upload request with config: {config}")
     
     background_tasks.add_task(process_image, task_id, input_path, config)
     

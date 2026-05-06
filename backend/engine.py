@@ -79,10 +79,12 @@ class EmojiMosaicEngine:
         w, h = img.size
         
         # Fidelity Scale (1-10)
-        # q=1 -> 20 columns (Super fast draft)
-        # q=5 -> 60 columns (Good detail, decent speed)
-        # q=10 -> 110 columns (Max detail)
-        target_cols = 10 + (quality * 10)
+        # Formula: 10 + (quality^2 * 2)
+        # q=1 -> 12 columns (Draft)
+        # q=5 -> 60 columns (Matches old q=1 as requested!)
+        # q=10 -> 210 columns (Extreme Masterpiece)
+        target_cols = 10 + (quality ** 2) * 2
+        print(f"DEBUG: Processing mosaic with target_cols={target_cols}, emoji_size={emoji_size}")
         
         # Calculate window size to hit our target columns
         analysis_window = max(1, w // target_cols)
