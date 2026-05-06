@@ -536,7 +536,7 @@ const SettingsPanel = ({ quality, emojiSize, contrast, saturation, onQualityChan
 };
 
 // ========== PREVIEW CARD COMPONENT ==========
-const PreviewCard = ({ isLoading, imageSrc, label, onClick, isInput = false, onFileDrop }) => {
+const PreviewCard = ({ isLoading, imageSrc, label, onClick, isInput = false, onFileDrop, onDownload }) => {
   const [dragOver, setDragOver] = useState(false);
 
   const handleDragOver = (e) => {
@@ -589,7 +589,21 @@ const PreviewCard = ({ isLoading, imageSrc, label, onClick, isInput = false, onF
           onDrop={isInput ? handleDrop : undefined}
         >
           <img src={imageSrc} alt={label} className="preview-img" />
-          <div className="label">{label}</div>
+          <div className="label-group">
+            <div className="label">{label}</div>
+            {!isInput && onDownload && (
+              <button 
+                className="preview-download-btn" 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onDownload();
+                }}
+                title="Download Masterpiece"
+              >
+                <Download size={18} />
+              </button>
+            )}
+          </div>
         </div>
       ) : isInput ? (
         <div
@@ -809,20 +823,7 @@ const EmojiMosaic = () => {
           </button>
         )}
 
-        {/* Download toggle visible in both normal and expanded views */}
-        {outputUrl && !isLoading && (
-          <button
-            className="download-toggle"
-            style={{ zIndex: 2000001 }}
-            onClick={(e) => {
-              e.stopPropagation();
-              setShowDownloadPanel(true);
-            }}
-            title="Download options"
-          >
-            <Download size={20} />
-          </button>
-        )}
+        {/* Floating download button removed - now using card-level button as requested */}
 
         {/* export-panel removed - using slide-out download panel instead */}
       </div>
@@ -859,6 +860,7 @@ const EmojiMosaic = () => {
                 imageSrc={outputUrl}
                 label="View Masterpiece"
                 onClick={() => outputUrl && setIsExpanded(true)}
+                onDownload={() => setShowDownloadPanel(true)}
               />
             )}
           </AnimatePresence>
