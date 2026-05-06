@@ -86,8 +86,7 @@ async def upload_image(
     background_tasks: BackgroundTasks,
     image: UploadFile = File(...),
     quality: int = Form(3),
-    emoji_size: int = Form(16),
-    tint_strength: float = Form(0.6)
+    emoji_size: int = Form(16)
 ):
     task_id = str(uuid.uuid4())
     file_ext = os.path.splitext(image.filename)[1]
@@ -100,8 +99,7 @@ async def upload_image(
     
     config = {
         "quality": quality,
-        "emoji_size": emoji_size,
-        "tint_strength": tint_strength
+        "emoji_size": emoji_size
     }
     
     background_tasks.add_task(process_image, task_id, input_path, config)
@@ -143,9 +141,13 @@ async def export_image(
         filename=os.path.basename(export_path),
     )
 
-@app.get("/")
-async def root():
-    return {"message": "Emoji Mosaic Perfect Engine is running"}
+STATIC_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "static")
+if os.path.exists(STATIC_DIR):
+    app.mount("/", StaticFiles(directory=STATIC_DIR, html=True), name="frontend")
+else:
+    @app.get("/")
+    async def root():
+        return {"message": "Emoji Mosaic Perfect Engine is running (Frontend not built yet)"}
 
 if __name__ == "__main__":
     import uvicorn

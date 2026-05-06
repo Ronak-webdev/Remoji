@@ -16,15 +16,34 @@ def get_average_color(image_path):
     try:
         with Image.open(image_path) as img:
             img = img.convert('RGBA')
-            pixels = np.array(img)  # shape H×W×4
-            mask = pixels[:, :, 3] > 10  # non-transparent pixels
-            if mask.sum() == 0:
+            pixels = np.array(img)
+            alpha_mask = pixels[:, :, 3] > 10
+            if alpha_mask.sum() == 0:
                 return None
-            rgb_pixels = pixels[mask][:, :3]  # only RGB of visible pixels
-            return rgb_pixels.mean(axis=0).astype(int)
+            visible_rgb = pixels[alpha_mask][:, :3]
+            return visible_rgb.mean(axis=0).astype(int)
     except Exception as e:
-        print(f"Error processing {image_path}: {e}")
+        print(f"Error: {e}")
         return None
+
+def get_color_variance(image_path):
+    """
+    Returns the standard deviation of pixel colors (R, G, B) across
+    visible (non-transparent) pixels. High variance = complex/colorful emoji.
+    Low variance = simple/monochrome emoji (e.g., black circle).
+    Store as 'variance' column in CSV.
+    """
+    try:
+        with Image.open(image_path) as img:
+            img = img.convert('RGBA')
+            pixels = np.array(img)
+            alpha_mask = pixels[:, :, 3] > 10
+            if alpha_mask.sum() < 10:
+                return 0.0
+            visible_rgb = pixels[alpha_mask][:, :3].astype(np.float32)
+            return float(visible_rgb.std())
+    except:
+        return 0.0
 
 def main():
     print(f"Loading metadata from {CSV_PATH}...")
@@ -60,12 +79,14 @@ def main():
             
         avg_rgb = get_average_color(png_path)
         if avg_rgb is not None:
+            variance = get_color_variance(png_path)
             processed_data.append({
                 'emoji': emoji_char,
                 'r': avg_rgb[0],
                 'g': avg_rgb[1],
                 'b': avg_rgb[2],
-                'hex': hex_code # Keep hex for later if needed
+                'hex': hex_code, # Keep hex for later if needed
+                'variance': variance
             })
             count += 1
             if count % 500 == 0:
@@ -78,8 +99,13 @@ def main():
         return
         
     out_df = pd.DataFrame(processed_data)
-    # Reorder to match engine expectations: emoji, r, g, b, hex
-    out_df[['emoji', 'r', 'g', 'b', 'hex']].to_csv(OUTPUT_CSV, index=False, encoding='utf-8')
+    
+    # Apply diversity filter
+    from emoji_filter import filter_diverse_emojis
+    out_df = filter_diverse_emojis(out_df, min_delta_e=6.0)
+    
+    # Reorder to match engine expectations: emoji, r, g, b, hex, variance
+    out_df[['emoji', 'r', 'g', 'b', 'hex', 'variance']].to_csv(OUTPUT_CSV, index=False, encoding='utf-8')
     print(f"Saved to {OUTPUT_CSV}")
 
 if __name__ == "__main__":
