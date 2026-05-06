@@ -629,7 +629,7 @@ const EmojiMosaic = () => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [quality, setQuality] = useState(3);
-  const [emojiSize, setEmojiSize] = useState(12);
+  const [emojiSize, setEmojiSize] = useState(16);
   const [error, setError] = useState(null);
   const [contrast, setContrast] = useState(1.1);
   const [saturation, setSaturation] = useState(1);
