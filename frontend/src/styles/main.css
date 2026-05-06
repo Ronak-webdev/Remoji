@@ -1304,29 +1304,10 @@ header p {
   line-height: 1.4;
 }
 
-.label-group {
-  position: absolute;
-  bottom: 20px;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  background: rgba(0, 0, 0, 0.7);
-  backdrop-filter: blur(8px);
-  padding: 6px 6px 6px 20px;
-  border-radius: 100px;
-  border: 1px solid var(--glass-border);
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
-}
-
-.label-group .label {
-  font-size: 0.8rem;
-  color: var(--primary);
-  font-weight: 600;
-  letter-spacing: 0.5px;
-  text-transform: uppercase;
-}
-
 .card-download-btn {
+  position: absolute;
+  right: 14px;
+  bottom: 14px;
   width: 36px;
   height: 36px;
   border-radius: 50%;

@@ -597,21 +597,19 @@ const PreviewCard = ({ isLoading, imageSrc, label, onClick, isInput = false, onF
           onDrop={isInput ? handleDrop : undefined}
         >
           <img src={imageSrc} alt={label} className="preview-img" />
-          <div className="label-group">
-            <div className="label">{label}</div>
-            {!isInput && onDownload && (
-              <button 
-                className="card-download-btn" 
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onDownload();
-                }}
-                title="Download Masterpiece"
-              >
-                <Download size={18} />
-              </button>
-            )}
-          </div>
+          <div className="label">{label}</div>
+          {!isInput && onDownload && (
+            <button
+              className="card-download-btn"
+              onClick={(e) => {
+                e.stopPropagation();
+                onDownload();
+              }}
+              title="Download Masterpiece"
+            >
+              <Download size={18} />
+            </button>
+          )}
         </div>
       ) : isInput ? (
         <div
