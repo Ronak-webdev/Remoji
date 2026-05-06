@@ -1,7 +1,7 @@
 import os
 import numpy as np
 import pandas as pd
-from PIL import Image, ImageOps, ImageEnhance
+from PIL import Image, ImageOps, ImageEnhance, ImageDraw
 from scipy.spatial import KDTree
 from skimage import color
 
@@ -12,16 +12,12 @@ class EmojiMosaicEngine:
         self.emojis = self.df['emoji'].values
         self.base_count = len(self.emojis)
         
-        # Load RGB and Mirroring (Double the dataset by horizontally flipping emojis)
-        # First half: Original, Second half: Mirrored
+        # Load RGB and Mirroring for diversity
         rgb_orig = self.df[['r', 'g', 'b']].values.astype(np.float32) / 255.0
         self.emoji_rgb = np.tile(rgb_orig, (2, 1))
         
-        # Convert to LAB for perceptually accurate matching
-        # Input shape (N, 3) -> reshape to (N, 1, 3) for rgb2lab -> (N, 3)
+        # LAB Matching for human perception
         self.emoji_lab = color.rgb2lab(self.emoji_rgb.reshape(-1, 1, 3)).reshape(-1, 3)
-        
-        # Build KDTree on LAB values
         self.tree = KDTree(self.emoji_lab)
         
         if 'hex' in self.df.columns:
@@ -50,7 +46,6 @@ class EmojiMosaicEngine:
         return None
 
     def _get_sprite(self, index, size):
-        # Check if this is a mirrored version
         is_mirrored = index >= self.base_count
         actual_index = index % self.base_count
         
@@ -72,18 +67,13 @@ class EmojiMosaicEngine:
             except:
                 pass
                 
-        # Fallback transparent image
         img = Image.new('RGBA', (size, size), (255, 255, 255, 0))
         self._sprite_cache[key] = img
         return img
 
     def get_best_emoji_index(self, rgb):
-        """Find the closest emoji using KDTree in LAB space"""
-        # Normalize input RGB (0-1)
         rgb_norm = rgb.astype(np.float32) / 255.0
-        # Convert to LAB
         lab = color.rgb2lab(rgb_norm.reshape(1, 1, 3)).reshape(3)
-        # Query KDTree
         _, index = self.tree.query(lab)
         return index
 
@@ -92,38 +82,29 @@ class EmojiMosaicEngine:
         emoji_size = int(config.get('emoji_size', 16))
         contrast_val = float(config.get('contrast', 1.1))
         saturation_val = float(config.get('saturation', 1.0))
-        # Overlay factor (The "Masterpiece Secret Sauce")
-        overlay_factor = float(config.get('overlay', 0.15)) 
+        # Planet Mode uses heavier overlay (Default 35%)
+        overlay_factor = float(config.get('overlay', 0.35)) 
         
-        # Load image and fix orientation
         img = Image.open(input_path)
         img = ImageOps.exif_transpose(img).convert('RGB')
         
-        # Apply Contrast and Saturation to the source
-        if contrast_val != 1.0:
-            img = ImageEnhance.Contrast(img).enhance(contrast_val)
-        if saturation_val != 1.0:
-            img = ImageEnhance.Color(img).enhance(saturation_val)
+        # Boost vibrance for Planet effect
+        img = ImageEnhance.Contrast(img).enhance(contrast_val)
+        img = ImageEnhance.Color(img).enhance(saturation_val)
             
         w, h = img.size
-        
-        # Fidelity Scale
         target_cols = 60 + (quality * 20)
         
-        # Calculate grid
         analysis_window = max(1, w // target_cols)
         cols = w // analysis_window
         rows = h // analysis_window
         
-        # Resize for pixel data
         img_small = img.resize((cols, rows), Image.Resampling.LANCZOS)
         pixels = np.array(img_small, dtype=np.float32)
         
-        # Output dimensions
         out_w = cols * emoji_size
         out_h = rows * emoji_size
         
-        # Cap dimensions for Render memory
         MAX_DIM = 8000
         if out_w > MAX_DIM or out_h > MAX_DIM:
             scale_down = MAX_DIM / max(out_w, out_h)
@@ -132,48 +113,37 @@ class EmojiMosaicEngine:
             out_h = rows * emoji_size
 
         # Create output canvas
-        output = Image.new('RGBA', (out_w, out_h), (255, 255, 255, 0))
-        sprite_size = int(emoji_size * 1.1) # Slight overlap to prevent gaps
+        output = Image.new('RGBA', (out_w, out_h), (255, 255, 255, 255))
+        sprite_size = int(emoji_size * 1.05) # Clean grid
 
-        # Floyd-Steinberg Dithering
-        print("DEBUG: Applying Masterpiece Dithering & LAB Matching...")
+        print("DEBUG: Processing Planet-Style Mosaic...")
         for y in range(rows):
             for x in range(cols):
-                old_pixel = pixels[y, x].copy()
+                target_rgb = pixels[y, x]
                 
-                # Get best emoji for current pixel
-                idx = self.get_best_emoji_index(old_pixel)
-                
-                # Calculate error (Original Color - Emoji Color)
-                # Use RGB for error diffusion as it's simpler and more stable than LAB error
-                emoji_rgb = self.emoji_rgb[idx] * 255.0
-                error = old_pixel - emoji_rgb
-                
-                # Distribute error to neighbors
-                if x + 1 < cols:
-                    pixels[y, x + 1] += error * 7 / 16
-                if y + 1 < rows:
-                    if x > 0:
-                        pixels[y + 1, x - 1] += error * 3 / 16
-                    pixels[y + 1, x] += error * 5 / 16
-                    if x + 1 < cols:
-                        pixels[y + 1, x + 1] += error * 1 / 16
-                
-                # Paste emoji
+                # Planet Secret 1: Solid Fill Background
+                # Fill the cell with the exact target color to ensure 100% accuracy in gaps
                 px = x * emoji_size
                 py = y * emoji_size
+                shape = [px, py, px + emoji_size, py + emoji_size]
+                ImageDraw.Draw(output).rectangle(shape, fill=tuple(target_rgb.astype(int)))
+                
+                # Get best emoji
+                idx = self.get_best_emoji_index(target_rgb)
                 sprite = self._get_sprite(idx, sprite_size)
+                
+                # Paste emoji with a bit of transparency so the solid color shows through
+                # This creates the "Perfect Tint" look
                 output.paste(sprite, (px, py), sprite)
         
-        # Apply the "Masterpiece Overlay" (The honest version of the cheating trick)
+        # Planet Secret 2: Masterpiece Overlay
         if overlay_factor > 0:
-            print(f"DEBUG: Applying Masterpiece Overlay (Factor: {overlay_factor})")
-            # Create a high-res version of the original image to blend
+            print(f"DEBUG: Applying Planet Overlay (Factor: {overlay_factor})")
             original_high_res = img.resize((out_w, out_h), Image.Resampling.LANCZOS).convert("RGBA")
-            # Use the original image as a blend layer
             output = Image.blend(output, original_high_res, overlay_factor)
 
         output.save(output_path, "PNG")
         return output_path
+
 
 

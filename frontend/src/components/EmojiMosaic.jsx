@@ -533,17 +533,17 @@ const SettingsPanel = ({ quality, emojiSize, contrast, saturation, overlay, onQu
               <input
                 type="range"
                 min="0"
-                max="0.4"
+                max="1"
                 step="0.05"
                 value={overlay}
                 onChange={(e) => onOverlayChange(parseFloat(e.target.value))}
                 className="slider"
                 style={{
-                  background: `linear-gradient(to right, var(--primary) 0%, var(--primary) ${(overlay / 0.4) * 100}%, var(--glass-border) ${(overlay / 0.4) * 100}%, var(--glass-border) 100%)`
+                  background: `linear-gradient(to right, var(--primary) 0%, var(--primary) ${overlay * 100}%, var(--glass-border) ${overlay * 100}%, var(--glass-border) 100%)`
                 }}
               />
             </div>
-            <small>0% = Pure Emoji | 40% = Ultra Accurate</small>
+            <small>0% = Pure Emoji | 100% = Full Accuracy</small>
           </div>
         </div>
 
@@ -659,7 +659,7 @@ const EmojiMosaic = () => {
   const [saturation, setSaturation] = useState(1);
   const [exportFormat, setExportFormat] = useState('png');
   const [exportQuality, setExportQuality] = useState('original');
-  const [overlay, setOverlay] = useState(0.15);
+  const [overlay, setOverlay] = useState(0.35);
   const [showDownloadPanel, setShowDownloadPanel] = useState(false);
   const [isBackendOnline, setIsBackendOnline] = useState(null);
 
