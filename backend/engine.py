@@ -100,14 +100,13 @@ class EmojiMosaicEngine:
             out_w = cols * emoji_size * SCALE
             out_h = rows * emoji_size * SCALE
 
-        # Solid background (white) to prevent any transparency leaks
-        output = Image.new('RGBA', (out_w, out_h), (255, 255, 255, 255))
-        draw = ImageDraw.Draw(output)
+        # Transparent background as requested
+        output = Image.new('RGBA', (out_w, out_h), (255, 255, 255, 0))
         
-        # Aggressive 1.3x Overlap for depth
-        sprite_size = int(emoji_size * SCALE * 1.3)
+        # Aggressive 1.5x Overlap to kill gaps without background fill
+        sprite_size = int(emoji_size * SCALE * 1.5)
 
-        print(f"DEBUG: Generating Super-HD Mosaic... (Cols: {cols}, Res: {out_w}x{out_h})")
+        print(f"DEBUG: Generating Pure Emoji Mosaic... (Cols: {cols}, Res: {out_w}x{out_h})")
         for r in range(rows):
             for c in range(cols):
                 rgb = pixels[r, c]
@@ -116,14 +115,11 @@ class EmojiMosaicEngine:
                 x = c * emoji_size * SCALE
                 y = r * emoji_size * SCALE
                 
-                # 1. GAP FILL: Draw target color background for this cell
-                shape = [x, y, x + emoji_size * SCALE, y + emoji_size * SCALE]
-                draw.rectangle(shape, fill=tuple(rgb))
-                
-                # 2. EMOJI PASTE
+                # EMOJI PASTE (No background fill per user request)
                 idx = self.get_best_emoji_index(rgb)
                 sprite = self._get_sprite(idx, sprite_size)
-                # Offset slightly to center the 1.3x larger sprite
+                
+                # Offset to center the 1.5x larger sprite over the cell
                 offset = (sprite_size - (emoji_size * SCALE)) // 2
                 output.paste(sprite, (x - offset, y - offset), sprite)
         

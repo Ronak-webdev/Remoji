@@ -939,9 +939,8 @@ const EmojiMosaic = () => {
             imageUrl={outputUrl}
             onClose={() => setIsExpanded(false)}
             onDownload={() => {
-              setIsExpanded(false);
-              // Small delay to let ZoomViewer start closing
-              setTimeout(() => setShowDownloadPanel(true), 150);
+              console.log("Opening download panel...");
+              setShowDownloadPanel(true);
             }}
           />
         )}
