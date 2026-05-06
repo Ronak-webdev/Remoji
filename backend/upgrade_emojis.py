@@ -79,13 +79,12 @@ def main():
     print(f"Total entries to process (including skin variations): {len(expanded_data)}")
 
     # Sources in order of preference
-    # 1. Google Noto (512x512) - BEST QUALITY
-    # 2. JoyPixels (512x512 / fallback 128)
+    # 1. Google Noto (512x512) - Best for 2D sharp
+    # 2. Microsoft Fluent (512x512) - Best for 3D premium
     # 3. Apple (160x160)
-    # 4. Twemoji (72x72)
     sources = [
         ("https://fonts.gstatic.com/s/e/notoemoji/latest/{}/512.png", lambda x: x.lower().replace("-fe0f", "")),
-        ("https://raw.githubusercontent.com/joypixels/emoji-assets/master/png/512/{}.png", lambda x: x.lower()),
+        ("https://raw.githubusercontent.com/gauravghongde/fluent-emoji/main/fluentui-emoji/assets/{}/Default/512.png", lambda x: x.lower()), # Might need specific mapping, keeping as fallback
         ("https://raw.githubusercontent.com/iamcal/emoji-data/master/img-apple-160/{}.png", lambda x: x.lower()),
         ("https://cdn.jsdelivr.net/gh/twitter/twemoji@latest/assets/72x72/{}.png", lambda x: x.lower())
     ]
@@ -97,19 +96,23 @@ def main():
         char = "".join([chr(int(x, 16)) for x in unified.split('-')])
         out_path = os.path.join(OUT_DIR, f"{unified}.png")
         
-        # If file exists and is valid, skip
+        # FORCE UPGRADE: If file is small (not 512px), delete it to re-download
         if os.path.exists(out_path):
-            avg = get_avg_color(out_path)
-            if avg is not None:
-                emoji_list.append({'emoji': char, 'r': avg[0], 'g': avg[1], 'b': avg[2], 'hex': unified})
-                processed_hex.add(unified)
-                continue
-            else:
+            try:
+                with Image.open(out_path) as img:
+                    if img.width < 512:
+                        os.remove(out_path) # Force re-download for higher resolution
+                    else:
+                        avg = get_avg_color(out_path)
+                        if avg:
+                            emoji_list.append({'emoji': char, 'r': avg[0], 'g': avg[1], 'b': avg[2], 'hex': unified})
+                            processed_hex.add(unified)
+                            continue
+            except:
                 os.remove(out_path)
 
         # Try to download
         downloaded = False
-        # Try both with and without FE0F if primary fails
         variants = [unified]
         if "FE0F" in unified:
             variants.append(unified.replace("-FE0F", ""))
@@ -128,8 +131,8 @@ def main():
                 emoji_list.append({'emoji': char, 'r': avg[0], 'g': avg[1], 'b': avg[2], 'hex': unified})
                 processed_hex.add(unified)
                 success += 1
-                if len(emoji_list) % 100 == 0:
-                    print(f"  Progress: {len(emoji_list)} emojis... (New: {success})")
+                if len(emoji_list) % 50 == 0:
+                    print(f"  Upgraded: {len(emoji_list)} emojis... (New/High-Res: {success})")
 
     # Save to CSV
     df = pd.DataFrame(emoji_list)
