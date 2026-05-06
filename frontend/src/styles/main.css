@@ -638,11 +638,13 @@ header p {
   cursor: pointer;
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 0.8rem;
   transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   border: none;
   text-transform: uppercase;
   letter-spacing: 0.5px;
+  text-align: center;
 }
 
 .btn-primary {
@@ -1097,7 +1099,7 @@ header p {
   width: 360px;
   background: var(--card-bg);
   border-left: 1px solid var(--glass-border);
-  z-index: 200000;
+  z-index: 2000100;
   display: flex;
   flex-direction: column;
   padding: 1.5rem;
@@ -1134,7 +1136,7 @@ header p {
   width: 360px;
   background: var(--card-bg);
   border-left: 1px solid var(--glass-border);
-  z-index: 200000;
+  z-index: 2000100;
   display: flex;
   flex-direction: column;
   padding: 2.5rem 2rem;

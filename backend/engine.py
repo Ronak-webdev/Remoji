@@ -122,8 +122,8 @@ class EmojiMosaicEngine:
         out_w = cols * cell
         out_h = rows * cell
         
-        # Memory Protection
-        MAX_DIM = 12000
+        # Memory Protection (Reduced for Render stability)
+        MAX_DIM = 5000 
         if out_w > MAX_DIM or out_h > MAX_DIM:
             scale_down = MAX_DIM / max(out_w, out_h)
             emoji_size = max(4, int(emoji_size * scale_down))
@@ -131,10 +131,8 @@ class EmojiMosaicEngine:
             out_w = cols * cell
             out_h = rows * cell
 
-        # White background — clean base, no transparency gaps
+        # White background
         output = Image.new('RGB', (out_w, out_h), (255, 255, 255))
-        
-        # Sprite size: exactly cell size (1.0x) — no unwanted overlap/bleed
         sprite_size = cell
 
         print(f"Generating LAB-Matched Mosaic... Cols={cols}, Canvas={out_w}x{out_h}")
@@ -146,12 +144,12 @@ class EmojiMosaicEngine:
                 
                 idx = self.get_best_emoji_index(rgb)
                 sprite = self._get_sprite(idx, sprite_size)
-                
-                # Paste with transparency mask — no color bleeding
                 output.paste(sprite.convert('RGB'), (x, y))
         
-        # Light sharpening for crispness
-        output = ImageEnhance.Sharpness(output).enhance(1.15)
+        # Cleanup cache to free memory for next run
+        self._sprite_cache.clear()
         
+        # Sharpening
+        output = ImageEnhance.Sharpness(output).enhance(1.15)
         output.save(output_path, "PNG")
         return output_path
