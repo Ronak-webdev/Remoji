@@ -939,8 +939,9 @@ const EmojiMosaic = () => {
             imageUrl={outputUrl}
             onClose={() => setIsExpanded(false)}
             onDownload={() => {
-              // Direct open without closing expanded view to prevent flicker
-              setShowDownloadPanel(true);
+              setIsExpanded(false);
+              // Small delay to let ZoomViewer start closing
+              setTimeout(() => setShowDownloadPanel(true), 150);
             }}
           />
         )}
@@ -952,7 +953,7 @@ const EmojiMosaic = () => {
           <>
             <motion.div
               className="slide-backdrop"
-              style={{ zIndex: 2000000 }}
+              style={{ zIndex: 9999998 }}
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
@@ -960,7 +961,7 @@ const EmojiMosaic = () => {
             />
             <motion.div
               className="slide-download-panel"
-              style={{ zIndex: 2000001 }}
+              style={{ zIndex: 9999999 }}
               initial={{ x: '100%' }}
               animate={{ x: 0 }}
               exit={{ x: '100%' }}
