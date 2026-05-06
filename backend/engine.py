@@ -131,11 +131,18 @@ class EmojiMosaicEngine:
         img = ImageOps.exif_transpose(img).convert('RGB')
         w, h = img.size
         
-        # Grid resolution
-        target_cols = 30 + (quality * 30)
-        analysis_window = max(1, w // target_cols)
-        cols = w // analysis_window
-        rows = h // analysis_window
+        # Grid resolution & Fidelity Scale
+        # q=5 corresponds to 60 columns (fast but detailed)
+        # q=10 corresponds to 110 columns (max detail)
+        target_cols = 10 + (quality * 10)
+        cols = min(target_cols, w)
+        
+        # Fix Hexagonal Aspect Ratio: 
+        # Since hex rows are squashed vertically by 0.866, we must sample more rows 
+        # from the original image to compensate, preventing a squashed output.
+        analysis_window_x = w / cols
+        analysis_window_y = analysis_window_x * 0.866
+        rows = max(1, int(h / analysis_window_y))
         
         # Saliency map for adaptive detail
         sal_map = compute_saliency_map(img)
