@@ -3,6 +3,7 @@ import os
 import json
 import urllib.request
 import time
+import concurrent.futures
 from PIL import Image
 import pandas as pd
 import numpy as np
@@ -40,10 +41,15 @@ def get_avg_color(img_path):
     except Exception:
         return None
 
-def download_file(url, out_path, retries=2):
+def download_file(url, out_path, retries=1):
     for i in range(retries):
         try:
-            urllib.request.urlretrieve(url, out_path)
+            # Add User-Agent to prevent 403
+            req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
+            with urllib.request.urlopen(req, timeout=5) as response:
+                with open(out_path, 'wb') as f:
+                    f.write(response.read())
+            
             # Basic check if it's a valid PNG
             with Image.open(out_path) as img:
                 img.verify()
@@ -51,11 +57,44 @@ def download_file(url, out_path, retries=2):
         except:
             if os.path.exists(out_path):
                 os.remove(out_path)
-            time.sleep(0.5)
     return False
 
+def process_single_emoji(item, sources, processed_hex):
+    unified = item['unified'].upper()
+    if unified in processed_hex: return None
+    
+    char = "".join([chr(int(x, 16)) for x in unified.split('-')])
+    out_path = os.path.join(OUT_DIR, f"{unified}.png")
+    
+    # FORCE UPGRADE Check
+    if os.path.exists(out_path):
+        try:
+            with Image.open(out_path) as img:
+                if img.width >= 512:
+                    avg = get_avg_color(out_path)
+                    if avg:
+                        return {'emoji': char, 'r': avg[0], 'g': avg[1], 'b': avg[2], 'hex': unified}
+            os.remove(out_path)
+        except:
+            os.remove(out_path)
+
+    # Download with variants
+    variants = [unified]
+    if "FE0F" in unified:
+        variants.append(unified.replace("-FE0F", ""))
+        
+    for v in variants:
+        for source_tpl, formatter in sources:
+            url = source_tpl.format(formatter(v))
+            if download_file(url, out_path):
+                avg = get_avg_color(out_path)
+                if avg:
+                    return {'emoji': char, 'r': avg[0], 'g': avg[1], 'b': avg[2], 'hex': unified}
+                break
+    return None
+
 def main():
-    print("🚀 Starting ULTIMATE Master Emoji Upgrade (Skin Tones + Multi-Source)...")
+    print("🚀 Starting TURBO Multithreaded Emoji Upgrade (512px Focus)...")
     
     if not os.path.exists(DATA_FULL_PATH):
         print("Error: emoji_data_full.json not found!")
@@ -64,11 +103,7 @@ def main():
     with open(DATA_FULL_PATH, 'r', encoding='utf-8') as f:
         data = json.load(f)
     
-    emoji_list = []
-    processed_hex = set()
-    success = 0
-
-    # Expand data to include skin variations
+    # Expand data
     expanded_data = []
     for item in data:
         expanded_data.append(item)
@@ -76,68 +111,39 @@ def main():
             for skin_key, skin_item in item['skin_variations'].items():
                 expanded_data.append(skin_item)
 
-    print(f"Total entries to process (including skin variations): {len(expanded_data)}")
-
-    # Sources in order of preference
-    # 1. Google Noto (512x512) - Best for 2D sharp
-    # 2. Microsoft Fluent (512x512) - Best for 3D premium
-    # 3. Apple (160x160)
+    print(f"Total entries to process: {len(expanded_data)}")
+    
     sources = [
         ("https://fonts.gstatic.com/s/e/notoemoji/latest/{}/512.png", lambda x: x.lower().replace("-fe0f", "")),
-        ("https://raw.githubusercontent.com/gauravghongde/fluent-emoji/main/fluentui-emoji/assets/{}/Default/512.png", lambda x: x.lower()), # Might need specific mapping, keeping as fallback
+        ("https://raw.githubusercontent.com/gauravghongde/fluent-emoji/main/fluentui-emoji/assets/{}/Default/512.png", lambda x: x.lower()),
         ("https://raw.githubusercontent.com/iamcal/emoji-data/master/img-apple-160/{}.png", lambda x: x.lower()),
         ("https://cdn.jsdelivr.net/gh/twitter/twemoji@latest/assets/72x72/{}.png", lambda x: x.lower())
     ]
     
-    for item in expanded_data:
-        unified = item['unified'].upper()
-        if unified in processed_hex: continue
+    processed_hex = set()
+    final_list = []
+    
+    # Using ThreadPoolExecutor for parallel downloads
+    print("🔥 Downloading in parallel (15 threads)...")
+    with concurrent.futures.ThreadPoolExecutor(max_workers=15) as executor:
+        future_to_emoji = {executor.submit(process_single_emoji, item, sources, processed_hex): item for item in expanded_data}
         
-        char = "".join([chr(int(x, 16)) for x in unified.split('-')])
-        out_path = os.path.join(OUT_DIR, f"{unified}.png")
-        
-        # FORCE UPGRADE: If file is small (not 512px), delete it to re-download
-        if os.path.exists(out_path):
+        count = 0
+        for future in concurrent.futures.as_completed(future_to_emoji):
             try:
-                with Image.open(out_path) as img:
-                    if img.width < 512:
-                        os.remove(out_path) # Force re-download for higher resolution
-                    else:
-                        avg = get_avg_color(out_path)
-                        if avg:
-                            emoji_list.append({'emoji': char, 'r': avg[0], 'g': avg[1], 'b': avg[2], 'hex': unified})
-                            processed_hex.add(unified)
-                            continue
-            except:
-                os.remove(out_path)
-
-        # Try to download
-        downloaded = False
-        variants = [unified]
-        if "FE0F" in unified:
-            variants.append(unified.replace("-FE0F", ""))
-            
-        for v in variants:
-            for source_tpl, formatter in sources:
-                url = source_tpl.format(formatter(v))
-                if download_file(url, out_path):
-                    downloaded = True
-                    break
-            if downloaded: break
-            
-        if downloaded:
-            avg = get_avg_color(out_path)
-            if avg:
-                emoji_list.append({'emoji': char, 'r': avg[0], 'g': avg[1], 'b': avg[2], 'hex': unified})
-                processed_hex.add(unified)
-                success += 1
-                if len(emoji_list) % 50 == 0:
-                    print(f"  Upgraded: {len(emoji_list)} emojis... (New/High-Res: {success})")
+                result = future.result()
+                if result:
+                    final_list.append(result)
+                    count += 1
+                    if count % 100 == 0:
+                        print(f"  Progress: {count} emojis processed...")
+            except Exception as e:
+                pass
 
     # Save to CSV
-    df = pd.DataFrame(emoji_list)
+    df = pd.DataFrame(final_list)
     df.to_csv(CSV_OUT, index=False)
-    print(f"\n✅ COMPLETE! Final High-Res Dataset Size: {len(emoji_list)}")
+    print(f"\n✅ TURBO COMPLETE! Total High-Res Emojis: {len(final_list)}")
     print(f"📁 PNGs: {OUT_DIR}")
     print(f"📁 CSV: {CSV_OUT}")
 
