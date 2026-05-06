@@ -200,16 +200,7 @@ const ZoomViewer = ({ imageUrl, onClose, onDownload }) => {
         Back
       </button>
 
-      <button
-        className="download-expanded-btn"
-        onClick={(e) => {
-          e.stopPropagation();
-          onDownload();
-        }}
-        title="Download Options"
-      >
-        <Download size={22} />
-      </button>
+      {/* Download button removed from here as per user request */}
 
       <div
         className="expanded-stage"
@@ -807,7 +798,7 @@ const EmojiMosaic = () => {
       </AnimatePresence>
 
       {/* Settings Toggle */}
-      <div className="floating-controls">
+      <div className="floating-controls" style={{ zIndex: 2000000 }}>
         {!isExpanded && (
           <button
             className="settings-toggle"
@@ -822,6 +813,7 @@ const EmojiMosaic = () => {
         {outputUrl && !isLoading && (
           <button
             className="download-toggle"
+            style={{ zIndex: 2000001 }}
             onClick={(e) => {
               e.stopPropagation();
               setShowDownloadPanel(true);
