@@ -593,7 +593,7 @@ const PreviewCard = ({ isLoading, imageSrc, label, onClick, isInput = false, onF
             <div className="label">{label}</div>
             {!isInput && onDownload && (
               <button 
-                className="preview-download-btn" 
+                className="card-download-btn" 
                 onClick={(e) => {
                   e.stopPropagation();
                   onDownload();
@@ -812,7 +812,7 @@ const EmojiMosaic = () => {
       </AnimatePresence>
 
       {/* Settings Toggle */}
-      <div className="floating-controls" style={{ zIndex: 2000000 }}>
+      <div className="floating-controls">
         {!isExpanded && (
           <button
             className="settings-toggle"
@@ -822,10 +822,6 @@ const EmojiMosaic = () => {
             <Settings size={28} />
           </button>
         )}
-
-        {/* Floating download button removed - now using card-level button as requested */}
-
-        {/* export-panel removed - using slide-out download panel instead */}
       </div>
 
       {/* Main Content */}
