@@ -946,69 +946,73 @@ const EmojiMosaic = () => {
         )}
       </AnimatePresence>
 
-      {/* Download Panel - portal level, renders above everything */}
-      <AnimatePresence>
-        {showDownloadPanel && ReactDOM.createPortal(
-          <>
+      {ReactDOM.createPortal(
+        <AnimatePresence>
+          {showDownloadPanel && (
             <motion.div
-              className="slide-backdrop"
-              style={{ zIndex: 9999998 }}
+              key="download-overlay"
+              style={{
+                position: 'fixed', inset: 0,
+                zIndex: 9999998,
+                display: 'flex', justifyContent: 'flex-end'
+              }}
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setShowDownloadPanel(false)}
-            />
-            <motion.div
-              className="slide-download-panel"
-              style={{ zIndex: 9999999 }}
-              initial={{ x: '100%' }}
-              animate={{ x: 0 }}
-              exit={{ x: '100%' }}
-              transition={{ type: 'tween', ease: 'circOut' }}
-              onClick={(e) => e.stopPropagation()}
             >
-              <div className="slide-header">
-                <h3>Download</h3>
-                <button className="close-btn" onClick={() => setShowDownloadPanel(false)}><X size={18} /></button>
-              </div>
-              <div className="slide-body">
-                <div className="export-option-group">
-                  <button
-                    className={`export-chip ${exportQuality === 'low' ? 'active' : ''}`}
-                    onClick={() => setExportQuality('low')}
-                  >Low Quality</button>
-                  <button
-                    className={`export-chip ${exportQuality === 'original' ? 'active' : ''}`}
-                    onClick={() => setExportQuality('original')}
-                  >Original Quality</button>
+              <motion.div
+                className="slide-download-panel"
+                style={{ zIndex: 9999999 }}
+                initial={{ x: '100%' }}
+                animate={{ x: 0 }}
+                exit={{ x: '100%' }}
+                transition={{ type: 'tween', ease: 'circOut' }}
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div className="slide-header">
+                  <h3>Download</h3>
+                  <button className="close-btn" onClick={() => setShowDownloadPanel(false)}><X size={18} /></button>
                 </div>
-                <div className="export-option-grid">
-                  {['png', 'jpg', 'webp'].map((format) => (
+                <div className="slide-body">
+                  <div className="export-option-group">
                     <button
-                      key={format}
-                      className={`export-format ${exportFormat === format ? 'active' : ''}`}
-                      onClick={() => setExportFormat(format)}
-                    >{format.toUpperCase()}</button>
-                  ))}
+                      className={`export-chip ${exportQuality === 'low' ? 'active' : ''}`}
+                      onClick={() => setExportQuality('low')}
+                    >Low Quality</button>
+                    <button
+                      className={`export-chip ${exportQuality === 'original' ? 'active' : ''}`}
+                      onClick={() => setExportQuality('original')}
+                    >Original Quality</button>
+                  </div>
+                  <div className="export-option-grid">
+                    {['png', 'jpg', 'webp'].map((format) => (
+                      <button
+                        key={format}
+                        className={`export-format ${exportFormat === format ? 'active' : ''}`}
+                        onClick={() => setExportFormat(format)}
+                      >{format.toUpperCase()}</button>
+                    ))}
+                  </div>
+                  <div style={{ marginTop: '1rem' }}>
+                    <button
+                      className="export-download-btn"
+                      onClick={async () => {
+                        await handleDownload();
+                        setShowDownloadPanel(false);
+                      }}
+                    >
+                      <Download size={16} />
+                      Download {exportFormat.toUpperCase()}
+                    </button>
+                  </div>
                 </div>
-                <div style={{ marginTop: '1rem' }}>
-                  <button
-                    className="export-download-btn"
-                    onClick={async () => {
-                      await handleDownload();
-                      setShowDownloadPanel(false);
-                    }}
-                  >
-                    <Download size={16} />
-                    Download {exportFormat.toUpperCase()}
-                  </button>
-                </div>
-              </div>
+              </motion.div>
             </motion.div>
-          </>,
-          document.body
-        )}
-      </AnimatePresence>
+          )}
+        </AnimatePresence>,
+        document.body
+      )}
 
       {/* Settings Panel */}
       <AnimatePresence>
