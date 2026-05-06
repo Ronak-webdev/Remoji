@@ -890,13 +890,8 @@ const EmojiMosaic = () => {
                   <Sparkles size={20} />
                   {isLoading ? 'Processing...' : 'Create Masterpiece'}
                 </button>
-                <button
-                  className="btn"
-                  style={{ background: 'rgba(255, 255, 255, 0.1)', color: 'white', marginTop: '10px' }}
-                  onClick={() => fileInputRef.current?.click()}
-                  disabled={isLoading}
-                >
-                  <Upload size={18} style={{ marginRight: '8px' }} />
+                <button className="btn btn-primary" onClick={() => fileInputRef.current?.click()} disabled={isLoading}>
+                  <Upload size={20} />
                   Change Photo
                 </button>
               </>
@@ -907,13 +902,8 @@ const EmojiMosaic = () => {
                   <Sparkles size={20} />
                   {isLoading ? 'Processing...' : 'Regenerate'}
                 </button>
-                <button
-                  className="btn"
-                  style={{ background: 'rgba(255, 255, 255, 0.1)', color: 'white', marginTop: '10px' }}
-                  onClick={() => fileInputRef.current?.click()}
-                  disabled={isLoading}
-                >
-                  <Upload size={18} style={{ marginRight: '8px' }} />
+                <button className="btn btn-primary" onClick={() => fileInputRef.current?.click()} disabled={isLoading}>
+                  <Upload size={20} />
                   Change Photo
                 </button>
               </>
