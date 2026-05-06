@@ -531,10 +531,17 @@ const SettingsPanel = ({ quality, emojiSize, onQualityChange, onEmojiSizeChange,
           </div>
         </div>
 
-        <div className="settings-footer">
           <Sparkles size={18} />
           <p>Adjust before processing for best results</p>
         </div>
+
+        <button 
+          className="btn btn-primary" 
+          style={{ marginTop: '2.5rem', width: '100%' }} 
+          onClick={onClose}
+        >
+          Apply Settings
+        </button>
       </motion.div>
     </>
   );
