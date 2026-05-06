@@ -986,7 +986,7 @@ const EmojiMosaic = () => {
           <ZoomViewer 
             imageUrl={outputUrl} 
             onClose={() => setIsExpanded(false)} 
-            onDownload={handleDownload}
+            onDownload={() => setShowDownloadPanel(true)}
           />
         )}
       </AnimatePresence>
