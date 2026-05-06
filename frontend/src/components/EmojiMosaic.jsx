@@ -817,14 +817,21 @@ const EmojiMosaic = () => {
               <Settings size={24} />
             </button>
 
-            {outputUrl && !isLoading && (
+            {previewUrl && (
               <button
                 className="download-toggle"
                 onClick={(e) => {
+                  if (!outputUrl || isLoading) return;
                   e.stopPropagation();
                   setShowDownloadPanel(true);
                 }}
                 title="Download Masterpiece"
+                disabled={!outputUrl || isLoading}
+                style={{ 
+                  opacity: (!outputUrl || isLoading) ? 0.4 : 1, 
+                  cursor: (!outputUrl || isLoading) ? 'not-allowed' : 'pointer',
+                  filter: (!outputUrl || isLoading) ? 'grayscale(1)' : 'none'
+                }}
               >
                 <Download size={24} />
               </button>
