@@ -16,14 +16,12 @@ def get_average_color(image_path):
     try:
         with Image.open(image_path) as img:
             img = img.convert('RGBA')
-            # Create a white background for transparency
-            bg = Image.new('RGBA', img.size, (255, 255, 255, 255))
-            composite = Image.alpha_composite(bg, img).convert('RGB')
-            
-            # Get average color
-            pixels = np.array(composite)
-            avg_color = pixels.mean(axis=(0, 1))
-            return avg_color.astype(int)
+            pixels = np.array(img)  # shape H×W×4
+            mask = pixels[:, :, 3] > 10  # non-transparent pixels
+            if mask.sum() == 0:
+                return None
+            rgb_pixels = pixels[mask][:, :3]  # only RGB of visible pixels
+            return rgb_pixels.mean(axis=0).astype(int)
     except Exception as e:
         print(f"Error processing {image_path}: {e}")
         return None

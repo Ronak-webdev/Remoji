@@ -86,7 +86,8 @@ async def upload_image(
     background_tasks: BackgroundTasks,
     image: UploadFile = File(...),
     quality: int = Form(3),
-    emoji_size: int = Form(16)
+    emoji_size: int = Form(16),
+    tint_strength: float = Form(0.6)
 ):
     task_id = str(uuid.uuid4())
     file_ext = os.path.splitext(image.filename)[1]
@@ -99,7 +100,8 @@ async def upload_image(
     
     config = {
         "quality": quality,
-        "emoji_size": emoji_size
+        "emoji_size": emoji_size,
+        "tint_strength": tint_strength
     }
     
     background_tasks.add_task(process_image, task_id, input_path, config)
