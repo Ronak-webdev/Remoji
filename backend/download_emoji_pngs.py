@@ -28,7 +28,8 @@ def emoji_to_filename(emoji_char):
     return '-'.join(result)
 
 def get_twemoji_url(filename):
-    return f"https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/72x72/{filename}.png"
+    # Switching to Google Noto Emoji for higher detail and vibrancy
+    return f"https://fonts.gstatic.com/s/e/notoemoji/latest/{filename}/512.png"
 
 # Read unique emojis from CSV
 unique_emojis = set()

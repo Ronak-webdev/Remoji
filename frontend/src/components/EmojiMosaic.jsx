@@ -659,7 +659,7 @@ const EmojiMosaic = () => {
   const [saturation, setSaturation] = useState(1);
   const [exportFormat, setExportFormat] = useState('png');
   const [exportQuality, setExportQuality] = useState('original');
-  const [overlay, setOverlay] = useState(0.35);
+  const [overlay, setOverlay] = useState(0.10);
   const [showDownloadPanel, setShowDownloadPanel] = useState(false);
   const [isBackendOnline, setIsBackendOnline] = useState(null);
 
