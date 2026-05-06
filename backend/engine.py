@@ -108,15 +108,25 @@ class EmojiMosaicEngine:
         img_small = img.resize((cols, rows), Image.Resampling.LANCZOS)
         pixels = np.array(img_small)
         
-        # Output canvas dimensions (2x scale for high-quality zoom)
-        out_w = cols * emoji_size * 2
-        out_h = rows * emoji_size * 2
+        # Output canvas dimensions
+        out_w = cols * emoji_size
+        out_h = rows * emoji_size
         
+        # Cap dimensions to prevent OOM on Render (Free Tier = 512MB RAM)
+        # 8000x8000 RGBA image takes ~256MB
+        MAX_DIM = 8000
+        if out_w > MAX_DIM or out_h > MAX_DIM:
+            scale_down = MAX_DIM / max(out_w, out_h)
+            emoji_size = max(4, int(emoji_size * scale_down))
+            out_w = cols * emoji_size
+            out_h = rows * emoji_size
+            print(f"DEBUG: Scaled down canvas to prevent OOM. New emoji_size: {emoji_size}, canvas: {out_w}x{out_h}")
+
         # Create transparent canvas
         output = Image.new('RGBA', (out_w, out_h), (255, 255, 255, 0))
         
         # Overlap emojis slightly (1.2x) to prevent gaps
-        sprite_size = int(emoji_size * 2 * 1.2)
+        sprite_size = int(emoji_size * 1.2)
 
         # Generate mosaic
         for r in range(rows):
@@ -124,8 +134,8 @@ class EmojiMosaicEngine:
                 rgb = pixels[r, c]
                 idx = self.get_best_emoji_index(rgb)
                 
-                x = c * emoji_size * 2
-                y = r * emoji_size * 2
+                x = c * emoji_size
+                y = r * emoji_size
                 
                 sprite = self._get_sprite(idx, sprite_size)
                 output.paste(sprite, (x, y), sprite)
