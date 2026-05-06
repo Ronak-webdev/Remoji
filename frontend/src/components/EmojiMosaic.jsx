@@ -544,7 +544,7 @@ const SettingsPanel = ({ quality, emojiSize, contrast, saturation, onQualityChan
 };
 
 // ========== PREVIEW CARD COMPONENT ==========
-const PreviewCard = ({ isLoading, imageSrc, label, onClick, isInput = false, onFileDrop, onDownload }) => {
+const PreviewCard = ({ isLoading, imageSrc, label, onClick, isInput = false, onFileDrop }) => {
   const [dragOver, setDragOver] = useState(false);
 
   const handleDragOver = (e) => {
@@ -598,18 +598,6 @@ const PreviewCard = ({ isLoading, imageSrc, label, onClick, isInput = false, onF
         >
           <img src={imageSrc} alt={label} className="preview-img" />
           <div className="label">{label}</div>
-          {!isInput && onDownload && (
-            <button
-              className="card-download-btn"
-              onClick={(e) => {
-                e.stopPropagation();
-                onDownload();
-              }}
-              title="Download Masterpiece"
-            >
-              <Download size={18} />
-            </button>
-          )}
         </div>
       ) : isInput ? (
         <div
@@ -820,13 +808,24 @@ const EmojiMosaic = () => {
       {/* Settings Toggle */}
       <div className="floating-controls">
         {!isExpanded && (
-          <button
-            className="settings-toggle"
-            onClick={() => setShowSettings(!showSettings)}
-            title="Settings"
-          >
-            <Settings size={28} />
-          </button>
+          <>
+            <button
+              className="settings-toggle"
+              onClick={() => setShowSettings(!showSettings)}
+              title="Settings"
+            >
+              <Settings size={28} />
+            </button>
+            {outputUrl && (
+              <button
+                className="settings-toggle"
+                onClick={() => setShowDownloadPanel(true)}
+                title="Download Masterpiece"
+              >
+                <Download size={28} />
+              </button>
+            )}
+          </>
         )}
       </div>
 
@@ -862,7 +861,6 @@ const EmojiMosaic = () => {
                 imageSrc={outputUrl}
                 label="View Masterpiece"
                 onClick={() => outputUrl && setIsExpanded(true)}
-                onDownload={() => setShowDownloadPanel(true)}
               />
             )}
           </AnimatePresence>
