@@ -58,7 +58,7 @@ const ZoomViewer = ({ imageUrl, onClose, onDownload }) => {
       };
 
       const clampedPos = clampPosition(newPos, newScale);
-      
+
       setPosition(clampedPos);
       return newScale;
     });
@@ -119,7 +119,7 @@ const ZoomViewer = ({ imageUrl, onClose, onDownload }) => {
       };
       setPosition(clampPosition(newPos, scale));
     } else if (e.touches.length === 2) {
-      e.preventDefault(); 
+      e.preventDefault();
       const distance = Math.hypot(
         e.touches[0].clientX - e.touches[1].clientX,
         e.touches[0].clientY - e.touches[1].clientY
@@ -181,7 +181,7 @@ const ZoomViewer = ({ imageUrl, onClose, onDownload }) => {
   }, [handleWheel, handleMouseMove, handleTouchMove]);
 
   return ReactDOM.createPortal(
-    <motion.div 
+    <motion.div
       className="fullscreen-overlay"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
@@ -210,14 +210,14 @@ const ZoomViewer = ({ imageUrl, onClose, onDownload }) => {
         <Download size={22} />
       </button>
 
-      <div 
+      <div
         className="expanded-stage"
         ref={containerRef}
         onMouseDown={handleMouseDown}
         onTouchStart={handleTouchStart}
         onDoubleClick={handleDoubleClick}
-        style={{ 
-          cursor: scale > 1 ? (dragging ? 'grabbing' : 'grab') : 'default' 
+        style={{
+          cursor: scale > 1 ? (dragging ? 'grabbing' : 'grab') : 'default'
         }}
       >
         <div
@@ -417,14 +417,14 @@ const SettingsPanel = ({ quality, emojiSize, contrast, saturation, onQualityChan
   return (
     <>
       {/* Backdrop - closes settings on click */}
-      <motion.div 
+      <motion.div
         className="settings-backdrop"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
         onClick={onClose}
       />
-      <motion.div 
+      <motion.div
         className="settings-sidebar"
         initial={{ x: '100%' }}
         animate={{ x: 0 }}
@@ -434,7 +434,7 @@ const SettingsPanel = ({ quality, emojiSize, contrast, saturation, onQualityChan
         <div className="sidebar-header">
           <h3>⚙️ Optimization</h3>
           <div className="header-controls">
-            <button 
+            <button
               className="theme-toggle-settings"
               onClick={onThemeToggle}
               title={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}
@@ -527,18 +527,18 @@ const SettingsPanel = ({ quality, emojiSize, contrast, saturation, onQualityChan
           </div>
         </div>
 
-          <Sparkles size={18} />
-          <p>Adjust before processing for best results</p>
-        </div>
+        <Sparkles size={18} />
+        <p>Adjust before processing for best results</p>
+      </div>
 
-        <button 
-          className="btn btn-primary" 
-          style={{ marginTop: '2.5rem', width: '100%' }} 
-          onClick={onClose}
-        >
-          Apply Settings
-        </button>
-      </motion.div>
+      <button
+        className="btn btn-primary"
+        style={{ marginTop: '2.5rem', width: '100%' }}
+        onClick={onClose}
+      >
+        Apply Settings
+      </button>
+    </motion.div >
     </>
   );
 };
@@ -572,7 +572,8 @@ const PreviewCard = ({ isLoading, imageSrc, label, onClick, isInput = false, onF
       initial={{ opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
       exit={{ opacity: 0, y: -100, transition: { duration: 0.4 } }}
-      onClick={onClick}
+      onClick={imageSrc && isInput ? undefined : onClick}
+      style={{ cursor: imageSrc && isInput ? 'default' : onClick ? 'pointer' : 'default' }}
     >
       {isLoading ? (
         <div className="loader-wrapper large-loader">
@@ -582,7 +583,7 @@ const PreviewCard = ({ isLoading, imageSrc, label, onClick, isInput = false, onF
           </p>
         </div>
       ) : imageSrc ? (
-        <div 
+        <div
           className={`img-wrapper ${dragOver ? 'drag-over' : ''}`}
           onDragOver={isInput ? handleDragOver : undefined}
           onDragEnter={isInput ? handleDragOver : undefined}
@@ -772,76 +773,7 @@ const EmojiMosaic = () => {
     }
   };
 
-  // ========== LEFT SLIDE-OUT DOWNLOAD PANEL ==========
-  const SlideOutDownload = ({ open, onClose }) => {
-    return (
-      <>
-        <motion.div
-          className="slide-backdrop"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          onClick={onClose}
-        />
-
-        <motion.div
-          className="slide-download-panel"
-          initial={{ x: '100%' }}
-          animate={{ x: 0 }}
-          exit={{ x: '100%' }}
-          transition={{ type: 'tween', ease: 'circOut' }}
-          onClick={(e) => e.stopPropagation()}
-        >
-          <div className="slide-header">
-            <h3>Download</h3>
-            <button className="close-btn" onClick={onClose}><X size={18} /></button>
-          </div>
-
-          <div className="slide-body">
-            <div className="export-option-group">
-              <button
-                className={`export-chip ${exportQuality === 'low' ? 'active' : ''}`}
-                onClick={() => setExportQuality('low')}
-              >
-                Low Quality
-              </button>
-              <button
-                className={`export-chip ${exportQuality === 'original' ? 'active' : ''}`}
-                onClick={() => setExportQuality('original')}
-              >
-                Original Quality
-              </button>
-            </div>
-
-            <div className="export-option-grid">
-              {['png', 'jpg', 'webp'].map((format) => (
-                <button
-                  key={format}
-                  className={`export-format ${exportFormat === format ? 'active' : ''}`}
-                  onClick={() => setExportFormat(format)}
-                >
-                  {format.toUpperCase()}
-                </button>
-              ))}
-            </div>
-
-            <div style={{ marginTop: '1rem' }}>
-              <button
-                className="export-download-btn"
-                onClick={async () => {
-                  await handleDownload();
-                  onClose();
-                }}
-              >
-                <Download size={16} />
-                Download {exportFormat.toUpperCase()}
-              </button>
-            </div>
-          </div>
-        </motion.div>
-      </>
-    );
-  };
+  // SlideOutDownload is now rendered as a portal at app level (below ZoomViewer)
 
   return (
     <div className="app-container">
@@ -896,13 +828,6 @@ const EmojiMosaic = () => {
         {/* export-panel removed - using slide-out download panel instead */}
       </div>
 
-      {/* Slide-out Download Panel */}
-      <AnimatePresence>
-        {showDownloadPanel && (
-          <SlideOutDownload open={showDownloadPanel} onClose={() => setShowDownloadPanel(false)} />
-        )}
-      </AnimatePresence>
-
       {/* Main Content */}
       <main className="main-stage">
         <div className={`preview-container ${outputUrl || isLoading ? 'split-view' : 'centered-view'} ${!previewUrl ? 'hero-state' : ''}`}>
@@ -953,10 +878,10 @@ const EmojiMosaic = () => {
                   <Sparkles size={20} />
                   {isLoading ? 'Processing...' : 'Create Masterpiece'}
                 </button>
-                <button 
-                  className="btn" 
-                  style={{ background: 'rgba(255, 255, 255, 0.1)', color: 'white', marginTop: '10px' }} 
-                  onClick={() => fileInputRef.current?.click()} 
+                <button
+                  className="btn"
+                  style={{ background: 'rgba(255, 255, 255, 0.1)', color: 'white', marginTop: '10px' }}
+                  onClick={() => fileInputRef.current?.click()}
                   disabled={isLoading}
                 >
                   <Upload size={18} style={{ marginRight: '8px' }} />
@@ -970,10 +895,10 @@ const EmojiMosaic = () => {
                   <Sparkles size={20} />
                   {isLoading ? 'Processing...' : 'Regenerate'}
                 </button>
-                <button 
-                  className="btn" 
-                  style={{ background: 'rgba(255, 255, 255, 0.1)', color: 'white', marginTop: '10px' }} 
-                  onClick={() => fileInputRef.current?.click()} 
+                <button
+                  className="btn"
+                  style={{ background: 'rgba(255, 255, 255, 0.1)', color: 'white', marginTop: '10px' }}
+                  onClick={() => fileInputRef.current?.click()}
                   disabled={isLoading}
                 >
                   <Upload size={18} style={{ marginRight: '8px' }} />
@@ -1000,14 +925,81 @@ const EmojiMosaic = () => {
         </AnimatePresence>
       </main>
 
-      {/* Zoom Viewer */}
+      {/* Zoom Viewer - renders above everything via portal */}
       <AnimatePresence>
         {isExpanded && outputUrl && (
-          <ZoomViewer 
-            imageUrl={outputUrl} 
-            onClose={() => setIsExpanded(false)} 
-            onDownload={() => setShowDownloadPanel(true)}
+          <ZoomViewer
+            imageUrl={outputUrl}
+            onClose={() => setIsExpanded(false)}
+            onDownload={() => {
+              setIsExpanded(false);
+              setTimeout(() => setShowDownloadPanel(true), 100);
+            }}
           />
+        )}
+      </AnimatePresence>
+
+      {/* Download Panel - portal level, renders above everything */}
+      <AnimatePresence>
+        {showDownloadPanel && ReactDOM.createPortal(
+          <>
+            <motion.div
+              className="slide-backdrop"
+              style={{ zIndex: 2000000 }}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowDownloadPanel(false)}
+            />
+            <motion.div
+              className="slide-download-panel"
+              style={{ zIndex: 2000001 }}
+              initial={{ x: '100%' }}
+              animate={{ x: 0 }}
+              exit={{ x: '100%' }}
+              transition={{ type: 'tween', ease: 'circOut' }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="slide-header">
+                <h3>Download</h3>
+                <button className="close-btn" onClick={() => setShowDownloadPanel(false)}><X size={18} /></button>
+              </div>
+              <div className="slide-body">
+                <div className="export-option-group">
+                  <button
+                    className={`export-chip ${exportQuality === 'low' ? 'active' : ''}`}
+                    onClick={() => setExportQuality('low')}
+                  >Low Quality</button>
+                  <button
+                    className={`export-chip ${exportQuality === 'original' ? 'active' : ''}`}
+                    onClick={() => setExportQuality('original')}
+                  >Original Quality</button>
+                </div>
+                <div className="export-option-grid">
+                  {['png', 'jpg', 'webp'].map((format) => (
+                    <button
+                      key={format}
+                      className={`export-format ${exportFormat === format ? 'active' : ''}`}
+                      onClick={() => setExportFormat(format)}
+                    >{format.toUpperCase()}</button>
+                  ))}
+                </div>
+                <div style={{ marginTop: '1rem' }}>
+                  <button
+                    className="export-download-btn"
+                    onClick={async () => {
+                      await handleDownload();
+                      setShowDownloadPanel(false);
+                    }}
+                  >
+                    <Download size={16} />
+                    Download {exportFormat.toUpperCase()}
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </>,
+          document.body
         )}
       </AnimatePresence>
 
