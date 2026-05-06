@@ -913,7 +913,7 @@ const EmojiMosaic = () => {
                 isInput
                 imageSrc={previewUrl}
                 label="Source Photo"
-                onClick={() => fileInputRef.current?.click()}
+                onClick={!previewUrl ? () => fileInputRef.current?.click() : undefined}
                 onFileDrop={handleFileDrop}
               />
             )}
@@ -948,16 +948,36 @@ const EmojiMosaic = () => {
             animate={{ y: 0, opacity: 1 }}
           >
             {previewUrl && !outputUrl && (
-              <button className="btn btn-primary" onClick={handleProcess} disabled={isLoading}>
-                <Sparkles size={20} />
-                {isLoading ? 'Processing...' : 'Create Masterpiece'}
-              </button>
+              <>
+                <button className="btn btn-primary" onClick={handleProcess} disabled={isLoading}>
+                  <Sparkles size={20} />
+                  {isLoading ? 'Processing...' : 'Create Masterpiece'}
+                </button>
+                <button 
+                  className="btn" 
+                  style={{ background: 'rgba(255, 255, 255, 0.1)', color: 'white', marginTop: '10px' }} 
+                  onClick={() => fileInputRef.current?.click()} 
+                  disabled={isLoading}
+                >
+                  <Upload size={18} style={{ marginRight: '8px' }} />
+                  Change Photo
+                </button>
+              </>
             )}
             {outputUrl && (
               <>
                 <button className="btn btn-primary" onClick={handleProcess} disabled={isLoading}>
                   <Sparkles size={20} />
                   {isLoading ? 'Processing...' : 'Regenerate'}
+                </button>
+                <button 
+                  className="btn" 
+                  style={{ background: 'rgba(255, 255, 255, 0.1)', color: 'white', marginTop: '10px' }} 
+                  onClick={() => fileInputRef.current?.click()} 
+                  disabled={isLoading}
+                >
+                  <Upload size={18} style={{ marginRight: '8px' }} />
+                  Change Photo
                 </button>
               </>
             )}
