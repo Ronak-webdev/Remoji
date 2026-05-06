@@ -141,13 +141,9 @@ async def export_image(
         filename=os.path.basename(export_path),
     )
 
-STATIC_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "static")
-if os.path.exists(STATIC_DIR):
-    app.mount("/", StaticFiles(directory=STATIC_DIR, html=True), name="frontend")
-else:
-    @app.get("/")
-    async def root():
-        return {"message": "Emoji Mosaic Perfect Engine is running (Frontend not built yet)"}
+@app.get("/")
+async def root():
+    return {"message": "Emoji Mosaic Perfect Engine is running"}
 
 if __name__ == "__main__":
     import uvicorn

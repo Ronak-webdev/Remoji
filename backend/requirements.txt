@@ -6,5 +6,3 @@ pillow-avif-plugin
 numpy
 pandas
 scipy
-scikit-image
-opencv-python-headless
