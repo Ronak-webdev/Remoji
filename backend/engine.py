@@ -301,7 +301,7 @@ class EmojiMosaicEngine:
             stride = cell
             out_w, out_h = cols * cell, rows * cell
 
-        MAX_DIM = 7500
+        MAX_DIM = 4000
         if max(out_w, out_h) > MAX_DIM:
             sd = MAX_DIM / max(out_w, out_h)
             emoji_size = max(4, int(emoji_size * sd))
@@ -349,9 +349,15 @@ class EmojiMosaicEngine:
 
         self._sprite_cache.clear()
         self._raw_cache.clear()
+        
+        import gc
+        gc.collect()
 
         # Final output
         result = output.convert('RGB')
+        del output
+        gc.collect()
+        
         result = ImageEnhance.Sharpness(result).enhance(1.3)
         result.save(output_path, 'PNG', compress_level=1)
         return output_path
