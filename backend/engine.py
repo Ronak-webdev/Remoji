@@ -250,7 +250,7 @@ class EmojiMosaicEngine:
                 else:
                     matched_rgb = old  # No error if no RGB data
 
-                error = old - matched_rgb
+                error = (old - matched_rgb) * 0.75
 
                 if r % 2 == 0:
                     if c + 1 < cols:       pix[r,   c+1] += error * (7/16)
@@ -286,6 +286,11 @@ class EmojiMosaicEngine:
         rows = h // analysis_window
 
         img_small = img.resize((cols, rows), Image.Resampling.LANCZOS)
+        
+        # Enhance structural clarity for better facial recognition
+        img_small = ImageEnhance.Contrast(img_small).enhance(1.15)
+        img_small = ImageEnhance.Sharpness(img_small).enhance(1.4)
+        
         pixels = np.array(img_small)
 
         cell = emoji_size * SCALE
