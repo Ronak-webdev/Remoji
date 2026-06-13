@@ -414,7 +414,7 @@ const FolderUpload = ({ onChange }) => {
   );
 };
 
-const SettingsPanel = ({ quality, emojiSize, contrast, saturation, onQualityChange, onEmojiSizeChange, onContrastChange, onSaturationChange, onClose, theme, onThemeToggle }) => {
+const SettingsPanel = ({ quality, emojiSize, contrast, saturation, overlapEnabled, overlapPercent, dithering, onQualityChange, onEmojiSizeChange, onContrastChange, onSaturationChange, onOverlapEnabledChange, onOverlapPercentChange, onDitheringChange, onClose, theme, onThemeToggle }) => {
   return (
     <>
       {/* Backdrop - closes settings on click */}
@@ -525,6 +525,39 @@ const SettingsPanel = ({ quality, emojiSize, contrast, saturation, onQualityChan
               />
             </div>
             <small>0 = B&W | 2x = Vivid</small>
+          </div>
+          {/* Overlap Control */}
+          <div className="control-group">
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <label>HD Overlap</label>
+              <button 
+                className={`btn ${overlapEnabled ? 'btn-primary' : 'btn-secondary'}`}
+                onClick={() => onOverlapEnabledChange(!overlapEnabled)}
+                style={{ padding: '4px 10px', fontSize: '0.8rem', minWidth: '60px' }}
+              >
+                {overlapEnabled ? 'ON' : 'OFF'}
+              </button>
+            </div>
+            {overlapEnabled && (
+              <div style={{ marginTop: '10px' }}>
+                <label style={{ fontSize: '0.8rem', opacity: 0.8 }}>Overlap: {overlapPercent}%</label>
+                <div className="slider-container">
+                  <input
+                    type="range"
+                    min="0"
+                    max="35"
+                    step="1"
+                    value={overlapPercent}
+                    onChange={(e) => onOverlapPercentChange(parseInt(e.target.value))}
+                    className="slider"
+                    style={{
+                      background: `linear-gradient(to right, var(--primary) 0%, var(--primary) ${(overlapPercent / 35) * 100}%, var(--glass-border) ${(overlapPercent / 35) * 100}%, var(--glass-border) 100%)`
+                    }}
+                  />
+                </div>
+                <small>45% is recommended for best density.</small>
+              </div>
+            )}
           </div>
         </div>
 
@@ -643,6 +676,9 @@ const EmojiMosaic = () => {
   const [error, setError] = useState(null);
   const [contrast, setContrast] = useState(1.1);
   const [saturation, setSaturation] = useState(1);
+  const [dithering, setDithering] = useState(true);
+  const [overlapEnabled, setOverlapEnabled] = useState(false);
+  const [overlapPercent, setOverlapPercent] = useState(20);
   const [exportFormat, setExportFormat] = useState('png');
   const [exportQuality, setExportQuality] = useState('original');
   const [showDownloadPanel, setShowDownloadPanel] = useState(false);
@@ -719,6 +755,9 @@ const EmojiMosaic = () => {
     formData.append('emoji_size', emojiSize);
     formData.append('contrast', contrast);
     formData.append('saturation', saturation);
+    formData.append('dithering', dithering);
+    formData.append('overlap_enabled', overlapEnabled);
+    formData.append('overlap_percent', overlapPercent);
 
     try {
       // Upload image
@@ -1016,10 +1055,16 @@ const EmojiMosaic = () => {
             emojiSize={emojiSize}
             contrast={contrast}
             saturation={saturation}
+            overlapEnabled={overlapEnabled}
+            overlapPercent={overlapPercent}
             onQualityChange={setQuality}
             onEmojiSizeChange={setEmojiSize}
             onContrastChange={setContrast}
             onSaturationChange={setSaturation}
+            onOverlapEnabledChange={setOverlapEnabled}
+            onOverlapPercentChange={setOverlapPercent}
+            dithering={dithering}
+            onDitheringChange={setDithering}
             onClose={() => setShowSettings(false)}
             theme={theme}
             onThemeToggle={toggleTheme}

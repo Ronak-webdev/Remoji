@@ -88,12 +88,20 @@ def process_image(task_id, input_path, config):
         print(f"Error processing {task_id}: {str(e)}")
         tasks[task_id] = {"status": f"error: {str(e)}"}
 
+@app.get("/")
+async def health_check():
+    return {"status": "ok", "version": "hq"}
+
 @app.post("/upload")
 async def upload_image(
     background_tasks: BackgroundTasks,
     image: UploadFile = File(...),
     quality: int = Form(3),
-    emoji_size: int = Form(16)
+    emoji_size: int = Form(16),
+    dithering: bool = Form(True),
+    bg_color: str = Form('black'),
+    overlap_enabled: bool = Form(False),
+    overlap_percent: int = Form(45)
 ):
     task_id = str(uuid.uuid4())
     file_ext = os.path.splitext(image.filename)[1]
@@ -106,7 +114,11 @@ async def upload_image(
     
     config = {
         "quality": quality,
-        "emoji_size": emoji_size
+        "emoji_size": emoji_size,
+        "dithering": dithering,
+        "bg_color": bg_color,
+        "overlap_enabled": overlap_enabled,
+        "overlap_percent": overlap_percent
     }
     print(f"DEBUG: Received upload request with config: {config}")
     
