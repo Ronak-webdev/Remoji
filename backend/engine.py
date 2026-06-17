@@ -209,24 +209,12 @@ class EmojiMosaicEngine:
 
     # ── Color matching ───────────────────────────────────────────────────────
     def _best_match(self, rgb_pixel, used_counts=None, diversity_weight=0.25, k=12):
-        """LAB nearest-neighbor with optional diversity penalty."""
-        pixel_lab = rgb_to_lab(np.array([[rgb_pixel[0], rgb_pixel[1], rgb_pixel[2]]],
-                                         dtype=np.float32))
-        k = min(k, len(self.emoji_lab))
-        dists, indices = self.tree.query(pixel_lab[0], k=k)
-
-        if used_counts is None:
-            return int(indices[0])
-
-        max_dist = dists[-1] if dists[-1] > 0 else 1.0
-        best_idx, best_score = int(indices[0]), float('inf')
-        for dist, idx in zip(dists, indices):
-            penalty = used_counts.get(int(idx), 0) * diversity_weight * (max_dist / k)
-            score = dist + penalty
-            if score < best_score:
-                best_score = score
-                best_idx = int(idx)
-
+        """RGB Manhattan nearest-neighbor (migrated from Image2Emoji)."""
+        if self.emoji_rgb is None:
+            return 0
+        diff = np.abs(self.emoji_rgb - rgb_pixel)
+        dists = np.sum(diff, axis=1)
+        best_idx = int(np.argmin(dists))
         return best_idx
 
     # ── Floyd-Steinberg dithering ────────────────────────────────────────────
@@ -285,11 +273,7 @@ class EmojiMosaicEngine:
         cols = w // analysis_window
         rows = h // analysis_window
 
-        img_small = img.resize((cols, rows), Image.Resampling.LANCZOS)
-        
-        # Enhance structural clarity for better facial recognition
-        img_small = ImageEnhance.Contrast(img_small).enhance(1.15)
-        img_small = ImageEnhance.Sharpness(img_small).enhance(1.4)
+        img_small = img.resize((cols, rows), Image.Resampling.NEAREST)
         
         pixels = np.array(img_small)
 
@@ -332,25 +316,15 @@ class EmojiMosaicEngine:
         print(f"HQ Mosaic | {cols}×{rows} cells | canvas {out_w}×{out_h} | "
               f"emoji_size={emoji_size} | dither={use_dithering}")
 
-        if use_dithering:
-            print("Floyd-Steinberg dithering pass...")
-            indices = self._dither_pass(pixels, cols, rows)
-            r_range = range(rows-1, -1, -1) if overlap_enabled else range(rows)
-            for r in r_range:
-                c_range = range(cols-1, -1, -1) if overlap_enabled else range(cols)
-                for c in c_range:
-                    sprite = self._get_sprite(int(indices[r, c]), cell)
-                    output.paste(sprite, (c * stride, r * stride), mask=sprite)
-        else:
-            print("Nearest-neighbor pass...")
-            r_range = range(rows-1, -1, -1) if overlap_enabled else range(rows)
-            for r in r_range:
-                c_range = range(cols-1, -1, -1) if overlap_enabled else range(cols)
-                for c in c_range:
-                    old = np.clip(pixels[r, c], 0, 255)
-                    idx = self._best_match(old.astype(np.uint8))
-                    sprite = self._get_sprite(idx, cell)
-                    output.paste(sprite, (c * stride, r * stride), mask=sprite)
+        print("Image2Emoji rendering pass (Nearest-neighbor only)...")
+        r_range = range(rows-1, -1, -1) if overlap_enabled else range(rows)
+        for r in r_range:
+            c_range = range(cols-1, -1, -1) if overlap_enabled else range(cols)
+            for c in c_range:
+                old = np.clip(pixels[r, c], 0, 255)
+                idx = self._best_match(old.astype(np.uint8))
+                sprite = self._get_sprite(idx, cell)
+                output.paste(sprite, (c * stride, r * stride), mask=sprite)
 
         self._sprite_cache.clear()
         self._raw_cache.clear()
