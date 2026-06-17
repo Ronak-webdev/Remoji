@@ -82,16 +82,7 @@ class EmojiMosaicEngine:
         self.png_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "emoji_pngs")
         os.makedirs(self.png_dir, exist_ok=True)
         
-        # Filter out emojis that haven't been downloaded yet to prevent CDN timeouts/missing emojis
-        valid_rows = []
-        for i, row in self.df.iterrows():
-            code = row['hex'] if 'hex' in self.df.columns else self._emoji_to_filename(row['emoji'])
-            if os.path.exists(os.path.join(self.png_dir, f"{code}.png")):
-                valid_rows.append(i)
-                
-        self.df = self.df.loc[valid_rows].reset_index(drop=True)
-        print(f"Filtered to {len(self.df)} locally available emojis.")
-        
+        print(f"Loaded all {len(self.df)} emojis from dataset. Missing PNGs will be fetched dynamically.")
         self.emojis = self.df['emoji'].values
 
         # LAB KDTree
